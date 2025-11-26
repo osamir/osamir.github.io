@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Score Scaler</title>
+    <style>
+        /* General Reset and Layout */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8; /* Light theme background */
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Card Container */
+        .card {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        p.subtitle {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+
+        /* Input Styling */
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #4299e1;
+        }
+
+        /* Button Styling */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #3182ce;
+        }
+
+        /* Result Area */
+        .result-area {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .result-label {
+            font-size: 0.85rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2b6cb0;
+            margin-top: 0.5rem;
+        }
+
+        .error-msg {
+            color: #e53e3e;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Grade Scaler</h1>
+        <p class="subtitle">Convert scale 20 to scale 15</p>
+
+        <div class="input-group">
+            <label for="inputValue">Enter Grade (0 - 20)</label>
+            <input type="number" id="inputValue" min="0" max="20" step="0.5" placeholder="e.g. 19">
+            <div id="errorMsg" class="error-msg">Please enter a valid number between 0 and 20.</div>
+        </div>
+
+        <button onclick="calculateScore()">Calculate</button>
+
+        <div class="result-area">
+            <div class="result-label">Scaled Result</div>
+            <div id="resultOutput" class="result-value">--</div>
+        </div>
+    </div>
+
+    <script>
+        function calculateScore() {
+            // 1. Get the input value
+            const inputElement = document.getElementById('inputValue');
+            const resultElement = document.getElementById('resultOutput');
+            const errorElement = document.getElementById('errorMsg');
+            
+            const rawValue = inputElement.value;
+            const value = parseFloat(rawValue);
+
+            // 2. Validation
+            if (rawValue === "" || isNaN(value) || value < 0 || value > 20) {
+                errorElement.style.display = 'block';
+                resultElement.textContent = "--";
+                inputElement.style.borderColor = "#e53e3e";
+                return;
+            }
+
+            // Clear error states
+            errorElement.style.display = 'none';
+            inputElement.style.borderColor = "#e2e8f0";
+
+            // 3. Logic: Scale to 15
+            // Formula: (Input / 20) * 15
+            const scaled = (value / 20) * 15;
+
+            // 4. Logic: Ceil to upper half (0.5)
+            // Math.ceil(number * 2) / 2 rounds up to the nearest 0.5
+            const finalResult = Math.ceil(scaled * 2) / 2;
+
+            // 5. Output Result
+            resultElement.textContent = finalResult;
+        }
+
+        // Optional: Trigger calculation on Enter key
+        document.getElementById('inputValue').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                calculateScore();
+            }
+        });
+    </script>
+</body>
+</html>
