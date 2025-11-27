@@ -155,6 +155,7 @@
         .grades-container {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 1.5rem;
         }
 
@@ -172,18 +173,9 @@
         }
 
         .grade-value {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-        }
-
-        .grade-box.original .grade-value {
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-        }
-
-        .grade-box.scaled .grade-value {
             color: var(--success);
-            font-size: 2.2rem;
         }
 
         /* Loading Spinner */
@@ -253,9 +245,11 @@
             font-size: 0.9rem;
             display: none;
             word-wrap: break-word; /* Handle long URLs in error */
+            direction: ltr; /* Better for reading error details */
+            text-align: left;
         }
         .error-msg { background-color: #fef2f2; color: var(--error); border: 1px solid #fecaca; }
-        .info-msg { background-color: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+        .info-msg { background-color: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; direction: rtl; text-align: right;}
 
     </style>
 </head>
@@ -282,19 +276,10 @@
                 <div class="student-name" id="resName">--</div>
                 
                 <div class="grades-container">
-                    <!-- Original Grade Box -->
-                    <div class="grade-box original">
-                        <span class="grade-label">الدرجة الأصلية من 20</span>
-                        <span class="grade-value" id="resGradeOriginal">--</span>
-                    </div>
-
-                    <!-- Separator Line -->
-                    <div style="width: 1px; background-color: #bbf7d0;"></div>
-
-                    <!-- Scaled Grade Box -->
-                    <div class="grade-box scaled">
-                        <span class="grade-label">الدرجة بعد التنسيب الى 15</span>
-                        <span class="grade-value" id="resGradeScaled">--</span>
+                    <!-- Single Grade Box (Scaled removed) -->
+                    <div class="grade-box">
+                        <span class="grade-label">الدرجة من 30</span>
+                        <span class="grade-value" id="resGrade">--</span>
                     </div>
                 </div>
 
@@ -311,43 +296,61 @@
 
     <script>
         // --- Configuration ---
-        // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         
-        // No default ID provided. User MUST provide it in URL.
+        // 1. Sheet ID (Required)
         const SHEET_ID = urlParams.get('id');
+
+        // 2. Column Configuration (Optional - Defaults to B and C)
+        // Users can pass ?nameCol=B&gradeCol=C
+        const NAME_COL_LETTER = (urlParams.get('nameCol') || 'B').toUpperCase();
+        const GRADE_COL_LETTER = (urlParams.get('gradeCol') || 'C').toUpperCase();
 
         let studentsData = [];
         let isDataLoaded = false;
 
+        // Helper: Convert Column Letter to Index (A=0, B=1, etc.)
+        function letterToColumn(letter) {
+            let column = 0;
+            let length = letter.length;
+            for (let i = 0; i < length; i++) {
+                column += (letter.charCodeAt(i) - 64) * Math.pow(26, length - i - 1);
+            }
+            return column - 1;
+        }
+
+        const NAME_COL_INDEX = letterToColumn(NAME_COL_LETTER);
+        const GRADE_COL_INDEX = letterToColumn(GRADE_COL_LETTER);
+
         // --- Initialization ---
         window.onload = function() {
             if (!SHEET_ID) {
-                const statusEl = document.getElementById('statusMessage');
-                const searchBtn = document.getElementById('searchBtn');
-                
-                // Disable functionality
-                searchBtn.disabled = true;
-                document.getElementById('searchInput').disabled = true;
-                
-                statusEl.className = 'status-msg error-msg';
-                statusEl.style.display = 'block';
-                statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ: لم يتم العثور على معرف الورقة (ID).<br><br>يرجى إضافة المعرف إلى الرابط بالشكل التالي:<br><code>?id=YOUR_GOOGLE_SHEET_ID</code>';
+                showError('<i class="fas fa-exclamation-triangle"></i> خطأ: لم يتم العثور على معرف الورقة (ID).<br><br>Examples:<br><code>?id=YOUR_ID</code><br><code>?id=YOUR_ID&nameCol=B&gradeCol=C</code>');
+                disableUI();
                 return;
             }
             
             fetchData();
         };
 
+        function showError(msg) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.className = 'status-msg error-msg';
+            statusEl.style.display = 'block';
+            statusEl.innerHTML = msg;
+        }
+
+        function disableUI() {
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('searchInput').disabled = true;
+        }
+
         // --- Data Fetching ---
         async function fetchData() {
-            // Re-construct URL using the required SHEET_ID
             const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-
             const statusEl = document.getElementById('statusMessage');
             const searchBtn = document.getElementById('searchBtn');
             
-            // Disable search while loading
             searchBtn.disabled = true;
             statusEl.className = 'status-msg info-msg';
             statusEl.style.display = 'block';
@@ -355,49 +358,43 @@
 
             try {
                 const response = await fetch(SHEET_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const text = await response.text();
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                // The API returns JSON wrapped in a function call: google.visualization.Query.setResponse({...});
+                const text = await response.text();
                 const jsonText = text.substring(47).slice(0, -2);
                 const json = JSON.parse(jsonText);
                 
-                // Parse Rows
-                // Column B is index 1 (Name)
-                // Column D is index 3 (Grade)
+                // Parse Rows using dynamic column indices
                 studentsData = json.table.rows.map(row => {
-                    const nameCell = row.c[1]; // Column B
-                    const gradeCell = row.c[3]; // Column D
+                    // Safety check for empty cells
+                    const nameCell = row.c[NAME_COL_INDEX];
+                    const gradeCell = row.c[GRADE_COL_INDEX];
+                    
                     return {
                         name: nameCell ? (nameCell.v || '').toString() : '',
                         grade: gradeCell ? parseFloat(gradeCell.v || 0) : 0
                     };
-                }).filter(student => student.name.trim() !== ''); // Filter empty names
+                }).filter(student => student.name.trim() !== '');
 
                 isDataLoaded = true;
                 searchBtn.disabled = false;
                 statusEl.style.display = 'none';
-                console.log(`Loaded ${studentsData.length} students from Sheet ID: ${SHEET_ID}`);
+                console.log(`Loaded ${studentsData.length} students. NameCol: ${NAME_COL_LETTER}(${NAME_COL_INDEX}), GradeCol: ${GRADE_COL_LETTER}(${GRADE_COL_INDEX})`);
 
             } catch (error) {
                 console.error("Error fetching data:", error);
-                statusEl.className = 'status-msg error-msg';
-                statusEl.style.display = 'block';
-                statusEl.innerHTML = `<i class="fas fa-times-circle"></i> فشل تحميل البيانات.<br>تأكد من أن المعرف صحيح (ID: ${SHEET_ID}) وأن الملف متاح للعامة.`;
+                showError(`<i class="fas fa-times-circle"></i> فشل تحميل البيانات.<br>تأكد من أن المعرف صحيح ومن إذن الوصول (Public).`);
             }
         }
 
         // --- Arabic Text Normalization ---
-        // Helps match "أحمد" with "احمد" and "منى" with "مني"
         function normalizeArabic(text) {
             if (!text) return "";
             text = text.trim();
-            text = text.replace(/[أإآ]/g, 'ا'); // Normalize Alef
-            text = text.replace(/[ى]/g, 'ي');   // Normalize Yeh
-            text = text.replace(/[ة]/g, 'ه');   // Normalize Teh Marbuta
-            text = text.replace(/[\u064B-\u065F]/g, ''); // Remove Tashkeel
+            text = text.replace(/[أإآ]/g, 'ا'); 
+            text = text.replace(/[ى]/g, 'ي');   
+            text = text.replace(/[ة]/g, 'ه');   
+            text = text.replace(/[\u064B-\u065F]/g, ''); 
             return text;
         }
 
@@ -417,20 +414,17 @@
             statusEl.style.display = 'none';
 
             if (!normalizedInput) {
-                statusEl.className = 'status-msg error-msg';
-                statusEl.innerHTML = 'الرجاء إدخال اسم للبحث';
-                statusEl.style.display = 'block';
+                showError('الرجاء إدخال اسم للبحث');
                 return;
             }
 
-            // 1. Exact Match Search (after normalization)
+            // 1. Exact Match Search
             const exactMatches = studentsData.filter(s => normalizeArabic(s.name) === normalizedInput);
 
             if (exactMatches.length > 0) {
-                // Found exact match(es)
                 showResult(exactMatches[0]);
             } else {
-                // 2. Fuzzy Search / Partial Search
+                // 2. Fuzzy Search
                 findSimilarNames(normalizedInput);
             }
         }
@@ -438,53 +432,33 @@
         function showResult(student) {
             const resultArea = document.getElementById('resultArea');
             const nameEl = document.getElementById('resName');
-            const originalGradeEl = document.getElementById('resGradeOriginal');
-            const scaledGradeEl = document.getElementById('resGradeScaled');
+            const gradeEl = document.getElementById('resGrade');
 
-            // Set Name
             nameEl.textContent = student.name;
-
-            // Set Original Grade (out of 20)
-            const originalScore = student.grade;
-            originalGradeEl.textContent = originalScore;
-
-            // Calculate Scaled Grade (out of 15)
-            // Logic: Scale to 15, then Ceil to upper half (0.5)
-            // (Score / 20) * 15
-            const rawScaled = (originalScore / 20) * 15;
-            // Round logic: Math.ceil(num * 2) / 2
-            const finalScaled = Math.ceil(rawScaled * 2) / 2;
-
-            scaledGradeEl.textContent = finalScaled;
+            // Directly show the grade (assuming it is out of 30 in the sheet)
+            gradeEl.textContent = student.grade; 
 
             resultArea.style.display = 'block';
         }
 
         // --- Fuzzy Search / Suggestions ---
         function findSimilarNames(input) {
-            // Calculate similarity score for all names
             const candidates = studentsData.map(student => {
                 const normName = normalizeArabic(student.name);
-                // Check if name contains the input (Partial Match) - Give high priority
-                if (normName.includes(input)) {
-                    return { student, score: 0 }; // 0 distance is best
-                }
-                // Levenshtein Distance for typos
+                if (normName.includes(input)) return { student, score: 0 };
+                
                 const dist = levenshteinDistance(input, normName);
                 return { student, score: dist };
             });
 
-            // Sort by score (lower is better)
             candidates.sort((a, b) => a.score - b.score);
 
-            // Filter meaningful results (score < 5 or partial matches)
-            // If the input is short (e.g. 3 chars), allow less errors.
             const threshold = input.length < 4 ? 2 : 5;
             const topMatches = candidates.filter(c => c.score < threshold).slice(0, 5);
 
             if (topMatches.length > 0) {
                 const list = document.getElementById('suggestionsList');
-                list.innerHTML = ''; // Clear old
+                list.innerHTML = ''; 
                 
                 topMatches.forEach(match => {
                     const div = document.createElement('div');
@@ -496,41 +470,24 @@
 
                 document.getElementById('suggestionsArea').style.display = 'block';
             } else {
-                const statusEl = document.getElementById('statusMessage');
-                statusEl.className = 'status-msg error-msg';
-                statusEl.innerHTML = 'لم يتم العثور على اسم مشابه.';
-                statusEl.style.display = 'block';
+                showError('لم يتم العثور على اسم مشابه.');
             }
         }
 
-        // --- Levenshtein Distance Algorithm (for calculating text similarity) ---
+        // --- Levenshtein Distance ---
         function levenshteinDistance(a, b) {
             const matrix = [];
             let i, j;
-
             if (a.length === 0) return b.length;
             if (b.length === 0) return a.length;
-
-            for (i = 0; i <= b.length; i++) {
-                matrix[i] = [i];
-            }
-
-            for (j = 0; j <= a.length; j++) {
-                matrix[0][j] = j;
-            }
-
+            for (i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (j = 0; j <= a.length; j++) matrix[0][j] = j;
             for (i = 1; i <= b.length; i++) {
                 for (j = 1; j <= a.length; j++) {
                     if (b.charAt(i - 1) === a.charAt(j - 1)) {
                         matrix[i][j] = matrix[i - 1][j - 1];
                     } else {
-                        matrix[i][j] = Math.min(
-                            matrix[i - 1][j - 1] + 1, // substitution
-                            Math.min(
-                                matrix[i][j - 1] + 1, // insertion
-                                matrix[i - 1][j] + 1  // deletion
-                            )
-                        );
+                        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
                     }
                 }
             }
@@ -539,9 +496,7 @@
 
         // Trigger search on Enter key
         document.getElementById('searchInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                searchStudent();
-            }
+            if (e.key === 'Enter') searchStudent();
         });
 
     </script>
