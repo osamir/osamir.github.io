@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة الكويز</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo for Arabic) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Variables for Light Theme */
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /* Search Box Styling */
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-family: 'Cairo', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+            text-align: right;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        /* Button Styling */
+        button.main-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button.main-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* Results Area */
+        #resultArea {
+            margin-top: 2rem;
+            display: none; /* Hidden by default */
+        }
+
+        .grade-card {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .student-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #bbf7d0;
+        }
+
+        /* Grades Container */
+        .grades-container {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .grade-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grade-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .grade-value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .grade-box.original .grade-value {
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+        }
+
+        .grade-box.scaled .grade-value {
+            color: var(--success);
+            font-size: 2.2rem;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Suggestions List */
+        .suggestions {
+            margin-top: 1.5rem;
+            text-align: right;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .suggestion-title {
+            color: var(--error);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .suggestion-item {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f1f5f9;
+            border-color: var(--primary);
+        }
+
+        .suggestion-item i {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Messages */
+        .status-msg {
+            margin-top: 1rem;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+            word-wrap: break-word; /* Handle long URLs in error */
+        }
+        .error-msg { background-color: #fef2f2; color: var(--error); border: 1px solid #fecaca; }
+        .info-msg { background-color: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><i class="fas fa-graduation-cap"></i> نتيجة الكويز</h1>
+        <p class="subtitle">أدخل الاسم للبحث عن الدرجة</p>
+
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="اكتب اسم الطالب هنا..." autocomplete="off">
+        </div>
+
+        <button class="main-btn" onclick="searchStudent()" id="searchBtn">
+            <span class="btn-text">بحث</span>
+            <span class="loader" id="btnLoader"></span>
+        </button>
+
+        <div id="statusMessage" class="status-msg"></div>
+
+        <div id="resultArea">
+            <div class="grade-card">
+                <div class="student-name" id="resName">--</div>
+                
+                <div class="grades-container">
+                    <!-- Original Grade Box -->
+                    <div class="grade-box original">
+                        <span class="grade-label">الدرجة الأصلية من 20</span>
+                        <span class="grade-value" id="resGradeOriginal">--</span>
+                    </div>
+
+                    <!-- Separator Line -->
+                    <div style="width: 1px; background-color: #bbf7d0;"></div>
+
+                    <!-- Scaled Grade Box -->
+                    <div class="grade-box scaled">
+                        <span class="grade-label">الدرجة بعد التنسيب الى 15</span>
+                        <span class="grade-value" id="resGradeScaled">--</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="suggestionsArea" class="suggestions" style="display:none;">
+            <div class="suggestion-title"><i class="fas fa-exclamation-circle"></i> لم يتم العثور على الاسم، هل تقصد:</div>
+            <div id="suggestionsList">
+                <!-- Suggestions will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // No default ID provided. User MUST provide it in URL.
+        const SHEET_ID = urlParams.get('id');
+
+        let studentsData = [];
+        let isDataLoaded = false;
+
+        // --- Initialization ---
+        window.onload = function() {
+            if (!SHEET_ID) {
+                const statusEl = document.getElementById('statusMessage');
+                const searchBtn = document.getElementById('searchBtn');
+                
+                // Disable functionality
+                searchBtn.disabled = true;
+                document.getElementById('searchInput').disabled = true;
+                
+                statusEl.className = 'status-msg error-msg';
+                statusEl.style.display = 'block';
+                statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> خطأ: لم يتم العثور على معرف الورقة (ID).<br><br>يرجى إضافة المعرف إلى الرابط بالشكل التالي:<br><code>?id=YOUR_GOOGLE_SHEET_ID</code>';
+                return;
+            }
+            
+            fetchData();
+        };
+
+        // --- Data Fetching ---
+        async function fetchData() {
+            // Re-construct URL using the required SHEET_ID
+            const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+            const statusEl = document.getElementById('statusMessage');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            // Disable search while loading
+            searchBtn.disabled = true;
+            statusEl.className = 'status-msg info-msg';
+            statusEl.style.display = 'block';
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحميل البيانات...';
+
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                
+                // The API returns JSON wrapped in a function call: google.visualization.Query.setResponse({...});
+                const jsonText = text.substring(47).slice(0, -2);
+                const json = JSON.parse(jsonText);
+                
+                // Parse Rows
+                // Column B is index 1 (Name)
+                // Column D is index 3 (Grade)
+                studentsData = json.table.rows.map(row => {
+                    const nameCell = row.c[1]; // Column B
+                    const gradeCell = row.c[3]; // Column D
+                    return {
+                        name: nameCell ? (nameCell.v || '').toString() : '',
+                        grade: gradeCell ? parseFloat(gradeCell.v || 0) : 0
+                    };
+                }).filter(student => student.name.trim() !== ''); // Filter empty names
+
+                isDataLoaded = true;
+                searchBtn.disabled = false;
+                statusEl.style.display = 'none';
+                console.log(`Loaded ${studentsData.length} students from Sheet ID: ${SHEET_ID}`);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                statusEl.className = 'status-msg error-msg';
+                statusEl.style.display = 'block';
+                statusEl.innerHTML = `<i class="fas fa-times-circle"></i> فشل تحميل البيانات.<br>تأكد من أن المعرف صحيح (ID: ${SHEET_ID}) وأن الملف متاح للعامة.`;
+            }
+        }
+
+        // --- Arabic Text Normalization ---
+        // Helps match "أحمد" with "احمد" and "منى" with "مني"
+        function normalizeArabic(text) {
+            if (!text) return "";
+            text = text.trim();
+            text = text.replace(/[أإآ]/g, 'ا'); // Normalize Alef
+            text = text.replace(/[ى]/g, 'ي');   // Normalize Yeh
+            text = text.replace(/[ة]/g, 'ه');   // Normalize Teh Marbuta
+            text = text.replace(/[\u064B-\u065F]/g, ''); // Remove Tashkeel
+            return text;
+        }
+
+        // --- Search Logic ---
+        function searchStudent() {
+            if (!isDataLoaded) return;
+
+            const input = document.getElementById('searchInput').value;
+            const normalizedInput = normalizeArabic(input);
+            const resultArea = document.getElementById('resultArea');
+            const suggestionsArea = document.getElementById('suggestionsArea');
+            const statusEl = document.getElementById('statusMessage');
+
+            // Reset UI
+            resultArea.style.display = 'none';
+            suggestionsArea.style.display = 'none';
+            statusEl.style.display = 'none';
+
+            if (!normalizedInput) {
+                statusEl.className = 'status-msg error-msg';
+                statusEl.innerHTML = 'الرجاء إدخال اسم للبحث';
+                statusEl.style.display = 'block';
+                return;
+            }
+
+            // 1. Exact Match Search (after normalization)
+            const exactMatches = studentsData.filter(s => normalizeArabic(s.name) === normalizedInput);
+
+            if (exactMatches.length > 0) {
+                // Found exact match(es)
+                showResult(exactMatches[0]);
+            } else {
+                // 2. Fuzzy Search / Partial Search
+                findSimilarNames(normalizedInput);
+            }
+        }
+
+        function showResult(student) {
+            const resultArea = document.getElementById('resultArea');
+            const nameEl = document.getElementById('resName');
+            const originalGradeEl = document.getElementById('resGradeOriginal');
+            const scaledGradeEl = document.getElementById('resGradeScaled');
+
+            // Set Name
+            nameEl.textContent = student.name;
+
+            // Set Original Grade (out of 20)
+            const originalScore = student.grade;
+            originalGradeEl.textContent = originalScore;
+
+            // Calculate Scaled Grade (out of 15)
+            // Logic: Scale to 15, then Ceil to upper half (0.5)
+            // (Score / 20) * 15
+            const rawScaled = (originalScore / 20) * 15;
+            // Round logic: Math.ceil(num * 2) / 2
+            const finalScaled = Math.ceil(rawScaled * 2) / 2;
+
+            scaledGradeEl.textContent = finalScaled;
+
+            resultArea.style.display = 'block';
+        }
+
+        // --- Fuzzy Search / Suggestions ---
+        function findSimilarNames(input) {
+            // Calculate similarity score for all names
+            const candidates = studentsData.map(student => {
+                const normName = normalizeArabic(student.name);
+                // Check if name contains the input (Partial Match) - Give high priority
+                if (normName.includes(input)) {
+                    return { student, score: 0 }; // 0 distance is best
+                }
+                // Levenshtein Distance for typos
+                const dist = levenshteinDistance(input, normName);
+                return { student, score: dist };
+            });
+
+            // Sort by score (lower is better)
+            candidates.sort((a, b) => a.score - b.score);
+
+            // Filter meaningful results (score < 5 or partial matches)
+            // If the input is short (e.g. 3 chars), allow less errors.
+            const threshold = input.length < 4 ? 2 : 5;
+            const topMatches = candidates.filter(c => c.score < threshold).slice(0, 5);
+
+            if (topMatches.length > 0) {
+                const list = document.getElementById('suggestionsList');
+                list.innerHTML = ''; // Clear old
+                
+                topMatches.forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerHTML = `<span>${match.student.name}</span> <i class="fas fa-chevron-left"></i>`;
+                    div.onclick = () => showResult(match.student);
+                    list.appendChild(div);
+                });
+
+                document.getElementById('suggestionsArea').style.display = 'block';
+            } else {
+                const statusEl = document.getElementById('statusMessage');
+                statusEl.className = 'status-msg error-msg';
+                statusEl.innerHTML = 'لم يتم العثور على اسم مشابه.';
+                statusEl.style.display = 'block';
+            }
+        }
+
+        // --- Levenshtein Distance Algorithm (for calculating text similarity) ---
+        function levenshteinDistance(a, b) {
+            const matrix = [];
+            let i, j;
+
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+
+            for (i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+
+            for (j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+
+            for (i = 1; i <= b.length; i++) {
+                for (j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1, // substitution
+                            Math.min(
+                                matrix[i][j - 1] + 1, // insertion
+                                matrix[i - 1][j] + 1  // deletion
+                            )
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        // Trigger search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                searchStudent();
+            }
+        });
+
+    </script>
+</body>
+</html>
