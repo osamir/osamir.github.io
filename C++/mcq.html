@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Short Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- INTERACTIVE THEME --- */
+        .option-label {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        /* Hover effect only if not disabled */
+        label:not(.disabled) .option-label:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .option-radio:checked + .option-label {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* Instant Feedback States */
+        .correct-answer {
+            background-color: #dcfce7 !important; /* Green-100 */
+            border-color: #22c55e !important; /* Green-500 */
+            color: #14532d !important; /* Green-900 */
+        }
+        .wrong-answer {
+            background-color: #fee2e2 !important; /* Red-100 */
+            border-color: #ef4444 !important; /* Red-500 */
+            color: #7f1d1d !important; /* Red-900 */
+        }
+        
+        /* --- COMPACT PRINT THEME (Preserved) --- */
+        @media print {
+            @page {
+                margin: 1cm;
+                size: A4;
+            }
+            
+            body {
+                background-color: white;
+                font-size: 10pt;
+                color: black;
+                padding: 0 !important;
+            }
+
+            /* Hide elements not needed for print */
+            .no-print, button, .print\:hidden {
+                display: none !important;
+            }
+
+            /* Layout Adjustments */
+            .max-w-5xl {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .text-center.mb-12 {
+                margin-bottom: 1rem !important;
+                text-align: left;
+                border-bottom: 2px solid #000;
+                padding-bottom: 0.5rem;
+            }
+
+            /* Grid for questions to save space */
+            #questions-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* 2 Columns */
+                gap: 1cm;
+                margin-top: 0.5cm !important;
+                width: 100%;
+            }
+            
+            /* Remove vertical spacing logic from Tailwind */
+            .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+                --tw-space-y-reverse: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            /* Card styling for print */
+            .page-break {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                padding: 0 !important;
+                margin-bottom: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background-color: transparent !important;
+            }
+
+            /* Question Header */
+            .flex.items-center.mb-3 {
+                margin-bottom: 0.25rem !important;
+            }
+            span.rounded {
+                padding: 0 !important;
+                font-size: 10pt !important;
+                background-color: transparent !important;
+                color: #000 !important;
+                font-weight: bold;
+            }
+
+            /* Question Text */
+            h3 {
+                font-size: 10pt !important;
+                margin-bottom: 0.25rem !important;
+                color: #000 !important;
+            }
+
+            /* Options */
+            .mt-4 { margin-top: 0.2rem !important; }
+            
+            .option-label { 
+                padding: 0 !important; 
+                border: none !important;
+                margin-bottom: 2px !important;
+                background: none !important;
+            }
+            
+            /* Highlight Correct Answer in Print (Always show key) */
+            .print-correct {
+                font-weight: bold !important;
+                text-decoration: underline;
+                background-color: transparent !important;
+                border: none !important;
+                color: black !important;
+            }
+
+            /* Hide Radio Buttons/Icons in print */
+            .w-6.h-6 { 
+                display: none !important; 
+            }
+            
+            /* Show text index (a, b, c, d) */
+            .print-index {
+                display: inline-block !important;
+                font-weight: bold;
+                margin-right: 5px;
+            }
+        }
+    </style>
+</head>
+<body class="py-10 text-gray-800">
+
+    <div class="max-w-5xl mx-auto px-4">
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">190 Questions covering Lectures and Labs</h1>
+            <p class="text-gray-600">Topics: Intro, Variables, Operators, Conditionals, Loops, Functions, Recursion, Pointers, Arrays, Math/Time.</p>
+            
+            <!-- Controls -->
+            <div class="mt-8 flex justify-center gap-4 no-print">
+                <button onclick="revealAll()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded shadow transition-colors">
+                    End Quiz & Reveal Answers
+                </button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition-colors">
+                    Print / Save as PDF
+                </button>
+            </div>
+            <div id="score-display" class="hidden mt-6 p-4 bg-blue-50 border border-blue-200 rounded text-xl font-bold text-blue-800 text-center no-print"></div>
+        </div>
+
+        <!-- Questions Container -->
+        <div id="questions-container" class="space-y-6">
+            <!-- Content rendered via JS -->
+        </div>
+
+    </div>
+
+    <script>
+        // The 4 Specific Questions requested
+        const questions = [
+            {
+                text: "Which of the following is considered a Low Level Language?",
+                code: null,
+                options: ["C++", "Java", "Machine Code", "Python"],
+                correct: 2
+            },
+            {
+                text: "What program converts High-Level Language source code into Machine Code?",
+                code: null,
+                options: ["Assembler", "Compiler", "Executor", "Editor"],
+                correct: 1
+            },
+            {
+                text: "Which of the following is a valid single-line comment in C++?",
+                code: null,
+                options: ["/* Comment */", "// Comment", "# Comment", "-- Comment"],
+                correct: 1
+            },
+            {
+                text: "Where does the execution of a C++ program begin?",
+                code: null,
+                options: ["start()", "begin()", "main()", "header()"],
+                correct: 2
+            },
+            {
+                text: "What is the function of the 'cout' object?",
+                code: null,
+                options: ["To read input from keyboard", "To print output to the console", "To declare a variable", "To terminate the program"],
+                correct: 1
+            },
+            {
+                text: "Which header file is required to use 'cout' and 'cin'?",
+                code: null,
+                options: ["<math.h>", "<cstdlib>", "<iostream>", "<ctime>"],
+                correct: 2
+            },
+            {
+                text: "Machine code instructions consists of:",
+                code: null,
+                options: ["English words", "Binary sequences (0s and 1s)", "Assembly mnemonics", "Mathematical formulas"],
+                correct: 1
+            },
+            {
+                text: "What converts Assembly Language to Machine Language?",
+                code: null,
+                options: ["Compiler", "Interpreter", "Assembler", "Linker"],
+                correct: 2
+            },
+            {
+                text: "Which of the following statements about C++ is FALSE?",
+                code: null,
+                options: ["It is case-sensitive", "It is a high-level language", "It does not require a compiler", "It is used in writing Operating Systems"],
+                correct: 2
+            },
+            {
+                text: "Which character is used to terminate a C++ statement?",
+                code: null,
+                options: [".", ":", ";", "}"],
+                correct: 2
+            },
+
+            // --- LECTURE 2: VARIABLES & DATA TYPES ---
+            {
+                text: "Which of the following is a VALID variable name?",
+                code: null,
+                options: ["1stName", "my Name", "new_student", "int"],
+                correct: 2
+            },
+            {
+                text: "Which data type is used to store 'True' or 'False'?",
+                code: null,
+                options: ["int", "char", "bool", "float"],
+                correct: 2
+            },
+            {
+                text: "How do you declare a constant variable that cannot be changed?",
+                code: null,
+                options: ["static double PI = 3.14;", "final double PI = 3.14;", "const double PI = 3.14;", "fixed double PI = 3.14;"],
+                correct: 2
+            },
+            {
+                text: "What is the result of the following integer division?",
+                code: "int x = 5 / 2;",
+                options: ["2.5", "2", "3", "2.0"],
+                correct: 1
+            },
+            {
+                text: "What happens if you try to use a variable without declaring it?",
+                code: null,
+                options: ["Run-time error", "Syntax/Compilation error", "Logic error", "It works automatically"],
+                correct: 1
+            },
+            {
+                text: "Which operator is used for Modulus (remainder)?",
+                code: null,
+                options: ["/", "%", "#", "&"],
+                correct: 1
+            },
+            {
+                text: "Evaluate the expression priority: 3 + 4 * 5",
+                code: null,
+                options: ["35", "23", "12", "60"],
+                correct: 1
+            },
+            {
+                text: "Which of the following creates a variable 'score' and initializes it to 10?",
+                code: null,
+                options: ["int score;", "score = 10;", "int score = 10;", "10 = int score;"],
+                correct: 2
+            },
+            {
+                text: "Which of these is NOT a valid identifier (variable name)?",
+                code: null,
+                options: ["myVar", "_var", "var2", "2var"],
+                correct: 3
+            },
+            {
+                text: "What is the output of the following?",
+                code: "int a = 10;\ncout << a++;",
+                options: ["10", "11", "9", "Error"],
+                correct: 0
+            },
+            {
+                text: "What is the output of the following?",
+                code: "int a = 10;\ncout << ++a;",
+                options: ["10", "11", "9", "Error"],
+                correct: 1
+            },
+            {
+                text: "To use the 'pow(x, y)' function, which header must be included?",
+                code: null,
+                options: ["<iostream>", "<cmath>", "<cstdlib>", "<string>"],
+                correct: 1
+            },
+            {
+                text: "What is the result of: 9 % 5?",
+                code: null,
+                options: ["1.8", "1", "4", "5"],
+                correct: 2
+            },
+            {
+                text: "Which of the following assignments is valid?",
+                code: null,
+                options: ["3 = x;", "x + y = 10;", "x = 5;", "int = 5;"],
+                correct: 2
+            },
+            {
+                text: "What is the operator for 'Equal to' in a condition?",
+                code: null,
+                options: ["=", "==", ":=", "<>"],
+                correct: 1
+            },
+
+            // --- LECTURE 3: LOGIC & TIME ---
+            {
+                text: "What does the function 'time(0)' return?",
+                code: null,
+                options: ["Current hour", "Current year", "Seconds elapsed since Jan 1, 1970", "Milliseconds since program start"],
+                correct: 2
+            },
+            {
+                text: "What is the result of: true || false?",
+                code: null,
+                options: ["true", "false", "0", "Error"],
+                correct: 0
+            },
+            {
+                text: "What is the result of: true && false?",
+                code: null,
+                options: ["true", "false", "1", "Error"],
+                correct: 1
+            },
+            {
+                text: "Which operator represents 'Logical NOT'?",
+                code: null,
+                options: ["~", "!", "!=", "not"],
+                correct: 1
+            },
+            {
+                text: "To generate a random number, which function is used?",
+                code: null,
+                options: ["random()", "rand()", "rnd()", "generate()"],
+                correct: 1
+            },
+            {
+                text: "How do you generate a random number between 0 and 9?",
+                code: null,
+                options: ["rand() % 10", "rand() / 10", "rand(0, 9)", "rand() % 9"],
+                correct: 0
+            },
+            {
+                text: "What is the result of: !(5 > 2)?",
+                code: null,
+                options: ["true", "false", "5", "2"],
+                correct: 1
+            },
+            {
+                text: "In C++, the value '0' represents:",
+                code: null,
+                options: ["true", "false", "null", "void"],
+                correct: 1
+            },
+            {
+                text: "Which header is required for 'time(0)'?",
+                code: null,
+                options: ["<time>", "<ctime>", "<clock>", "<iostream>"],
+                correct: 1
+            },
+            {
+                text: "The expression (x >= 10 && x <= 20) checks if:",
+                code: null,
+                options: ["x is less than 10 or greater than 20", "x is exactly 10 or 20", "x is between 10 and 20 inclusive", "x is outside the range 10-20"],
+                correct: 2
+            },
+
+            // --- LECTURE 3 & LAB 3: CONDITIONALS ---
+            {
+                text: "Which statement is used to select one of many code blocks to be executed?",
+                code: null,
+                options: ["break", "switch", "default", "continue"],
+                correct: 1
+            },
+            {
+                text: "In a switch statement, what happens if no 'break' is used?",
+                code: null,
+                options: ["Syntax Error", "Execution falls through to the next case", "The loop terminates", "The program crashes"],
+                correct: 1
+            },
+            {
+                text: "The 'default' case in a switch statement is:",
+                code: null,
+                options: ["Mandatory", "Optional", "Only allowed for integers", "Executed first"],
+                correct: 1
+            },
+            {
+                text: "What is the correct syntax for an if-statement?",
+                code: null,
+                options: ["if x > 0 then", "if (x > 0)", "if {x > 0}", "if [x > 0]"],
+                correct: 1
+            },
+            {
+                text: "Which variable type CANNOT be used in a switch expression?",
+                code: null,
+                options: ["int", "char", "double", "bool"],
+                correct: 2
+            },
+            {
+                text: "What is the equivalent of: ",
+                code: "if (a > b)\n  m = a;\nelse\n  m = b;",
+                options: ["m = a > b ? a : b;", "m = a > b : a ? b;", "m = a < b ? a : b;", "m = (a, b);"],
+                correct: 0
+            },
+            {
+                text: "In the Quadratic Equation formula, b^2 - 4ac is called the:",
+                code: null,
+                options: ["Root", "Discriminant", "Factor", "Remainder"],
+                correct: 1
+            },
+            {
+                text: "A year is a leap year if it is divisible by 4 but NOT by 100, OR if it is divisible by:",
+                code: null,
+                options: ["10", "50", "400", "1000"],
+                correct: 2
+            },
+            {
+                text: "What output is produced if x = 10?",
+                code: "if (x > 5)\n  cout << 'A';\nelse if (x > 8)\n  cout << 'B';",
+                options: ["A", "B", "AB", "None"],
+                correct: 0
+            },
+            {
+                text: "What output is produced if x = 10?",
+                code: "if (x > 5)\n  cout << 'A';\nif (x > 8)\n  cout << 'B';",
+                options: ["A", "B", "AB", "None"],
+                correct: 2
+            },
+
+            // --- LECTURE 4: LOOPS ---
+            {
+                text: "Which loop is guaranteed to execute at least once?",
+                code: null,
+                options: ["for", "while", "do-while", "foreach"],
+                correct: 2
+            },
+            {
+                text: "Which statement skips the rest of the current loop iteration?",
+                code: null,
+                options: ["break", "continue", "return", "exit"],
+                correct: 1
+            },
+            {
+                text: "Which statement immediately terminates the loop?",
+                code: null,
+                options: ["break", "continue", "skip", "next"],
+                correct: 0
+            },
+            {
+                text: "What is the output of this loop?",
+                code: "for(int i=0; i<3; i++)\n  cout << i << \" \";",
+                options: ["0 1 2 3", "1 2 3", "0 1 2", "0 1"],
+                correct: 2
+            },
+            {
+                text: "How many times does this loop run?",
+                code: "int i = 0;\nwhile (i < 5) {\n  i++;\n}",
+                options: ["4", "5", "6", "Infinite"],
+                correct: 1
+            },
+            {
+                text: "Which header is needed to use 'setw' for formatting?",
+                code: null,
+                options: ["<iostream>", "<iomanip>", "<cmath>", "<fstream>"],
+                correct: 1
+            },
+            {
+                text: "What does 'setw(5)' do?",
+                code: null,
+                options: ["Sets value to 5", "Sets width of next output field to 5", "Sets precision to 5", "Sets loops to 5"],
+                correct: 1
+            },
+            {
+                text: "What is the output of:",
+                code: "for(int i=0; i<5; i++) {\n  if(i==3) break;\n  cout << i;\n}",
+                options: ["012", "0123", "0124", "01234"],
+                correct: 0
+            },
+            {
+                text: "What is the output of:",
+                code: "for(int i=0; i<5; i++) {\n  if(i==3) continue;\n  cout << i;\n}",
+                options: ["012", "0124", "0123", "01234"],
+                correct: 1
+            },
+            {
+                text: "Which loop is best when the number of iterations is known?",
+                code: null,
+                options: ["while", "do-while", "for", "infinite"],
+                correct: 2
+            },
+            {
+                text: "How do you write an infinite loop using 'while'?",
+                code: null,
+                options: ["while(false)", "while(1)", "while(0)", "while(null)"],
+                correct: 1
+            },
+            {
+                text: "In a nested loop (i outer, j inner), which loop changes faster?",
+                code: null,
+                options: ["Outer loop (i)", "Inner loop (j)", "Both same", "Randomly"],
+                correct: 1
+            },
+            {
+                text: "To calculate the sum of numbers from 1 to 100, which operator is most useful inside a loop?",
+                code: null,
+                options: ["+=", "*=", "/=", "%="],
+                correct: 0
+            },
+            {
+                text: "What is the value of 'sum' after code execution?",
+                code: "int sum=0;\nfor(int i=1; i<=3; i++)\n  sum+=i;",
+                options: ["3", "5", "6", "10"],
+                correct: 2
+            },
+            {
+                text: "Which snippet correctly prints the even numbers 0, 2, 4?",
+                code: null,
+                options: ["for(int i=0; i<5; i+=2) cout<<i;", "for(int i=0; i<5; i++) cout<<i;", "for(int i=0; i<=5; i+=2) cout<<i;", "for(int i=1; i<5; i+=2) cout<<i;"],
+                correct: 0
+            },
+
+            // --- LECTURE 5: FUNCTIONS & CONVERSIONS ---
+            {
+                text: "What is a function prototype?",
+                code: null,
+                options: ["The function body", "The function call", "The declaration of function name, return type, and parameters", "A variable inside a function"],
+                correct: 2
+            },
+            {
+                text: "If a function does not return a value, its return type is:",
+                code: null,
+                options: ["int", "null", "void", "empty"],
+                correct: 2
+            },
+            {
+                text: "What happens to local variables when a function finishes execution?",
+                code: null,
+                options: ["They are saved to disk", "They are destroyed/lost", "They are passed to main", "They become global"],
+                correct: 1
+            },
+            {
+                text: "When passing by value:",
+                code: null,
+                options: ["The function modifies the original variable", "A copy of the variable is passed", "The address is passed", "It is faster than pass by reference"],
+                correct: 1
+            },
+            {
+                text: "To convert Decimal to Binary, we repeatedly:",
+                code: null,
+                options: ["Multiply by 2", "Divide by 2 and take remainder", "Add 2", "Subtract 2"],
+                correct: 1
+            },
+            {
+                text: "In the code 'int a = 5.5;', what happens?",
+                code: null,
+                options: ["a becomes 5.5", "a becomes 5 (implicit casting)", "a becomes 6", "Compiler Error"],
+                correct: 1
+            },
+            {
+                text: "What is explicit type casting?",
+                code: null,
+                options: ["Automatic conversion", "Using syntax like (double)x", "Assigning int to float", "Using cout"],
+                correct: 1
+            },
+            {
+                text: "What is the output of 'cout << (int)3.9;' ?",
+                code: null,
+                options: ["3.9", "4", "3", "Error"],
+                correct: 2
+            },
+            {
+                text: "Can a function call another function?",
+                code: null,
+                options: ["Yes", "No", "Only if main calls it", "Only if it is void"],
+                correct: 0
+            },
+            {
+                text: "Which statement is used to send a value back from a function?",
+                code: null,
+                options: ["break", "send", "return", "back"],
+                correct: 2
+            },
+            {
+                text: "Binary 1101 in Decimal is:",
+                code: null,
+                options: ["11", "13", "15", "10"],
+                correct: 1
+            },
+            {
+                text: "The expression '5 / 2' in C++ evaluates to:",
+                code: null,
+                options: ["2.5", "2", "3", "Error"],
+                correct: 1
+            },
+            {
+                text: "The expression '5.0 / 2' in C++ evaluates to:",
+                code: null,
+                options: ["2.5", "2", "3", "Error"],
+                correct: 0
+            },
+            {
+                text: "What is a major advantage of using functions?",
+                code: null,
+                options: ["Increases code size", "Makes debugging harder", "Code reusability and modularity", "Slows down execution"],
+                correct: 2
+            },
+            {
+                text: "Variables declared inside a function are called:",
+                code: null,
+                options: ["Global variables", "Local variables", "Static variables", "Constant variables"],
+                correct: 1
+            },
+
+            // --- LECTURE 7 / LAB 7: POINTERS & RECURSION ---
+            {
+                text: "A pointer is a variable that stores:",
+                code: null,
+                options: ["An integer value", "A floating point value", "The address of another variable", "A character"],
+                correct: 2
+            },
+            {
+                text: "Which operator is used to get the address of a variable?",
+                code: null,
+                options: ["*", "&", "->", "%"],
+                correct: 1
+            },
+            {
+                text: "Which operator is used to Dereference a pointer (get value at address)?",
+                code: null,
+                options: ["*", "&", "->", "#"],
+                correct: 0
+            },
+            {
+                text: "If 'int *p = &x', what does '*p' represent?",
+                code: null,
+                options: ["The address of x", "The value of x", "The address of p", "The value of p"],
+                correct: 1
+            },
+            {
+                text: "What happens if you dereference an uninitialized pointer?",
+                code: null,
+                options: ["It works fine", "It always returns 0", "Unpredictable behavior / Crash", "It creates a new variable"],
+                correct: 2
+            },
+            {
+                text: "What is the output?",
+                code: "int x=10; \nint *p=&x; \n*p=20; \ncout<<x;",
+                options: ["10", "20", "Address of x", "Error"],
+                correct: 1
+            },
+            {
+                text: "To pass a variable by reference using pointers, the function parameter should be:",
+                code: null,
+                options: ["int x", "int *x", "int &x", "const int x"],
+                correct: 1
+            },
+            {
+                text: "In C++, 'int &x' in a function parameter list means:",
+                code: null,
+                options: ["Pass by value", "Pass by reference", "Pass by pointer", "Pass by constant"],
+                correct: 1
+            },
+            {
+                text: "Recursion is when a function:",
+                code: null,
+                options: ["Calls another function", "Calls itself", "Has a loop", "Has no return"],
+                correct: 1
+            },
+            {
+                text: "The Fibonacci sequence is defined as:",
+                code: null,
+                options: ["fib(n) = fib(n-1) * n", "fib(n) = fib(n-1) + fib(n-2)", "fib(n) = fib(n-1) - fib(n-2)", "fib(n) = n + n"],
+                correct: 1
+            },
+            {
+                text: "What is the base case for the standard Factorial recursion?",
+                code: null,
+                options: ["n == -1", "n == -2", "n == 0 || n == 1", "n == 2"],
+                correct: 2
+            },
+            {
+                text: "In the factorial recursion 'fact(n)', what is the recursive step?",
+                code: null,
+                options: ["n + fact(n-1)", "n * fact(n-1)", "n * fact(n+1)", "fact(n-2)"],
+                correct: 1
+            },
+            {
+                text: "What does 'p++' do if p is an integer pointer?",
+                code: null,
+                options: ["Increments the value pointed to", "Moves pointer to next integer address", "Syntax error", "Increments value by 1 byte"],
+                correct: 1
+            },
+            {
+                text: "How do you set a pointer to point to nothing (safe state)?",
+                code: null,
+                options: ["p = 0;", "p = NULL;", "p = nullptr;", "All of the above"],
+                correct: 3
+            },
+            {
+                text: "What is the output of 'fib(4)' where fib(0)=0, fib(1)=1?",
+                code: null,
+                options: ["2", "3", "5", "8"],
+                correct: 1
+            },
+
+            // --- ADDITIONAL LAB & MISC TOPICS ---
+            {
+                text: "Which function rounds a floating point number UP?",
+                code: null,
+                options: ["floor()", "ceil()", "round()", "abs()"],
+                correct: 1
+            },
+            {
+                text: "What does 'abs(-5)' return?",
+                code: null,
+                options: ["-5", "5", "0", "Error"],
+                correct: 1
+            },
+            {
+                text: "To check if a number is Prime, we check divisibility from 2 up to:",
+                code: null,
+                options: ["n", "n-1", "1", "infinity"],
+                correct: 1
+            },
+            {
+                text: "What does 'round(5.4)' return?",
+                code: null,
+                options: ["6", "5", "0", "Error"],
+                correct: 1
+            },
+            {
+                text: "What is a Palindrome number?",
+                code: null,
+                options: ["A number that is prime", "A number that reads same forwards and backwards", "A number divisible by 2", "A negative number"],
+                correct: 1
+            },
+            {
+                text: "How do you extract the last digit of an integer 'n'?",
+                code: null,
+                options: ["n / 10", "n % 10", "n - 10", "n * 10"],
+                correct: 1
+            },
+            {
+                text: "How do you remove the last digit of an integer 'n'?",
+                code: null,
+                options: ["n / 10", "n % 10", "n - 10", "n * 10"],
+                correct: 0
+            },
+            {
+                text: "The loop 'for(;;)' represents:",
+                code: null,
+                options: ["Syntax error", "Infinite loop", "Loop running once", "Loop running zero times"],
+                correct: 1
+            },
+            {
+                text: "What is the output of 'sqrt(16)'?",
+                code: null,
+                options: ["2", "4", "8", "256"],
+                correct: 1
+            },
+            {
+                text: "Which logic operator has the highest precedence?",
+                code: null,
+                options: ["||", "&&", "!", "Equal"],
+                correct: 2
+            },
+            {
+                text: "What is the result of 'pow(2, 3)'?",
+                code: null,
+                options: ["5", "6", "8", "9"],
+                correct: 2
+            },
+            {
+                text: "If 'int x=1, y=2;', what does 'swap(x,y)' do inside main if passed by value?",
+                code: null,
+                options: ["Swaps x and y in main", "Nothing changes in main", "Swaps addresses", "Error"],
+                correct: 1
+            },
+            {
+                text: "How do you print a double quote ' \" ' inside a string?",
+                code: null,
+                options: ["'", "\"", "\\\"", "\"\""],
+                correct: 2
+            },
+            {
+                text: "Which formatting flag creates a new line?",
+                code: null,
+                options: ["\\t", "\\b", "\\n", "\\r"],
+                correct: 2
+            },
+            {
+                text: "What does 'floor(3.9)' return?",
+                code: null,
+                options: ["3.0", "4.0", "3.9", "0.9"],
+                correct: 0
+            },
+            {
+                text: "What does 'ceil(3.1)' return?",
+                code: null,
+                options: ["3.0", "4.0", "3.1", "0.1"],
+                correct: 1
+            },
+            {
+                text: "Is '3a' a valid variable name?",
+                code: null,
+                options: ["Yes", "No", "Depends on compiler", "Only in main"],
+                correct: 1
+            },
+            {
+                text: "What is the size of 'bool' usually?",
+                code: null,
+                options: ["1 byte", "4 bytes", "8 bytes", "0 bytes"],
+                correct: 0
+            },
+            {
+                text: "What value corresponds to 'true' in C++?",
+                code: null,
+                options: ["0", "1 (or non-zero)", "-1 only", "null"],
+                correct: 1
+            },
+			{
+                id: 1,
+                text: "Assume x = 4 and y = 5 which of the following is true?",
+                code: null,
+                options: ["x<5 && y<5", "x>5 && y>5", "x<5 || y<5", "x>5 || y>5"],
+                correct: 2 // Index 2 is C (x<5 is True, T||F is True)
+            },
+            {
+                id: 2,
+                text: "What is the output of the following code?",
+                code: "int x = 1, y = 2, z;\nz = x > y ? y / x : x / y;\ncout << z;",
+                options: ["0.5", "2", "0", "1"],
+                correct: 2 // 1>2 is False. x/y -> 1/2 integer division is 0
+            },
+            {
+                id: 3,
+                text: "What is the output of the following code?",
+                code: "cout << \"\\\\n \\\"Result is \\\" \";",
+                options: ["\\n \"Result is \"", "\\ followed by \"Result is \"", "A new line followed by \"Result is \"", "\\n \\Result is \\"],
+                correct: 0 // The literal text inside the string contains \n which usually prints a newline, but option A represents the string literal representation often used in these exam formats. If strictly output, it's newline + text. Given options, A is the literal string content.
+            },
+            {
+                id: 4,
+                text: "What is the output of the following code?",
+                code: "for(int i=1; i<10; i++){\n    cout << i << \" \";\n    if(i==6)\n        break;\n}",
+                options: ["1 2 3 4 5 6 7 8 9 10", "1 2 3 4 5 6", "1 2 3 4 5 6 7 8 9", "1 2 3 4 5"],
+                correct: 1 // Prints 1 to 6. At 6, prints 6 then breaks.
+            },
+            {
+                id: 5,
+                text: "What is the output of the following code?",
+                code: "int i=1;\nwhile(i++ <= 6)\n    cout << ++i << \" \";",
+                options: ["1 3 5 7", "3 5 7", "2 3 4 5 6", "2 3 4 5"],
+                correct: 1 // i=1(check 1<=6, i->2), print ++i(3). i=3(check 3<=6, i->4), print ++i(5). i=5(check 5<=6, i->6), print ++i(7). i=7(check 7<=6 false).
+            },
+            {
+                id: 6,
+                text: "What is the output of the following code?",
+                code: "int x=0, y=6;\nswitch(x+3){\n    case 3: y+=2;\n    case 6: y=1;\n    default: y+=1;\n}\ncout << y;",
+                options: ["1", "2", "8", "6"],
+                correct: 1 // Case 3 hits. y=6+2=8. Fallthrough to case 6. y=1. Fallthrough to default. y=1+1=2.
+            },
+            {
+                id: 7,
+                text: "What is the output of the following code?",
+                code: "int x, y=5, z=5;\nx = y==z;\ncout << x;",
+                options: ["1", "0", "5", "compiler error"],
+                correct: 0 // True evaluates to 1
+            },
+            {
+                id: 8,
+                text: "C++ programming language is a ... language",
+                code: null,
+                options: ["High level", "Machine", "Low level", "Medium level"],
+                correct: 0 // Often debated as mid-level, but in MCQs "High level" is usually the intended answer vs Machine/Assembly.
+            },
+            {
+                id: 9,
+                text: "What is the output of the following code?",
+                code: "int x=3;\nif(x>10);\n    cout << \"x is greater\";\nelse\n    cout << \"x is smaller\";",
+                options: ["x is greater", "x is greaterx is smaller", "x is smaller", "compiler syntax error"],
+                correct: 3 // Syntax error: 'else' without a previous 'if' (because the semicolon terminated the if statement).
+            },
+            {
+                id: 10,
+                text: "Which of the following is the correct call for calculating eˣ in C++ (using <cmath>)?",
+                code: null,
+                options: ["e ^ x", "e (x)", "exp (e ,x)", "exp (x)"],
+                correct: 3
+            },
+            {
+                id: 11,
+                text: "Which of the following can be used to accept values from the keyboard in C++?",
+                code: null,
+                options: ["print", "input", "cin", "cout"],
+                correct: 2
+            },
+            {
+                id: 12,
+                text: "Which of the following should be included to use cout and cin?",
+                code: null,
+                options: ["math.h", "cstdlib", "iostream", "none of them"],
+                correct: 2
+            },
+            {
+                id: 13,
+                text: "How many times will the word Hello be printed?",
+                code: "int x = 1;\nwhile(x<10)\n    cout << \"Hello\";",
+                options: ["9", "11", "10", "infinity"],
+                correct: 3 // x never increments
+            },
+            {
+                id: 14,
+                text: "How to write the expression (x+y)/(x^y * z) in C++?",
+                code: null,
+                options: ["(x+y) / x^y*z", "(x+y) / (z * pow(x,y))", "(x+y) / x**y*z", "(x+y) / pow(x,y)*z"],
+                correct: 1 // Requires parentheses for denominator and pow() function.
+            },
+            {
+                id: 15,
+                text: "What is the output of the following code?",
+                code: "int i;\nfor(i=0; i<=6; i++);\n    cout << i << \" \";",
+                options: ["0 1 2 3 4 5 6", "1 2 3 4 5 6", "0 1 2 3 4 5", "7"],
+                correct: 3 // Semicolon after loop header. i increments until 7.
+            },
+            {
+                id: 16,
+                text: "Which is correct to call e^x?",
+                code: null,
+                options: ["exp(x)", "exp(e,x)", "pow(e,x)", "none"],
+                correct: 0
+            },
+            {
+                id: 17,
+                text: "What is the output of the following code?",
+                code: "int i=1;\nwhile(i++<=6)\n    cout << ++i << \" \";",
+                options: ["1 3 5 7", "3 5 7", "2 3 4 5 6", "2 3 4 5"],
+                correct: 1 // Duplicate of Q5
+            },
+            {
+                id: 18,
+                text: "Types of integers are:",
+                code: null,
+                options: ["short", "long", "int", "all the above"],
+                correct: 3
+            },
+            {
+                id: 19,
+                text: "The following symbols represents: \\b \\t \\n \\r",
+                code: null,
+                options: ["variables", "escape sequences", "format specifiers", "no answer"],
+                correct: 1
+            },
+            {
+                id: 20,
+                text: "... is preferred if you know the number of repetitions",
+                code: null,
+                options: ["for", "while", "do-while", "no answer"],
+                correct: 0
+            },
+            {
+                id: 21,
+                text: "We include library ... to use the objects cout, cin",
+                code: null,
+                options: ["iostream", "conio.h", "cstdlib", "no answer"],
+                correct: 0
+            },
+            {
+                id: 22,
+                text: "It can be defined as the language that can be describe English-like abbreviations representing elementary computer operations such as LOAD, ADD, SUB",
+                code: null,
+                options: ["Assembly", "High level", "Machine language", "no answer"],
+                correct: 0
+            },
+            {
+                id: 23,
+                text: "If num=-7 what is the value of z?",
+                code: "z = (num<0) ? 0 : num*num ;",
+                options: ["0", "49", "-7", "7"],
+                correct: 0 // -7 < 0 is True, so 0.
+            },
+            {
+                id: 24,
+                text: "Which is a valid C++ name?",
+                code: null,
+                options: ["int num2BER", "int printf", "int #number", "no answer"],
+                correct: 0 // 'int printf' is valid syntax but bad practice, 'num2BER' is perfectly valid.
+            },
+            {
+                id: 25,
+                text: "What is the output of this code?",
+                code: "int a=4, b=2;\na *= b+3;\ncout << a << \" \";",
+                options: ["20", "49", "7", "-7"],
+                correct: 0 // b+3 = 5. a *= 5 -> a = 4*5 = 20.
+            },
+            {
+                id: 26,
+                text: "What is the output of this statement?",
+                code: "int a = 5;\ncout << a++;",
+                options: ["value of a+1", "current value of a", "error message", "garbage"],
+                correct: 1
+            },
+            {
+                id: 27,
+                text: "What is the output of this code?",
+                code: "int a=0, b=1;\nif(a && b)\n  cout << \"a=0\";\nelse \n  cout << \"a=1\";",
+                options: ["a=0", "a=1", "error", "nothing"],
+                correct: 1 // 0 && 1 is False. Else executes.
+            },
+            {
+                id: 28,
+                text: "What does the program do?",
+                code: "float a,b;\ncin >> a >> b;\nif(a < b)\n  cout << a << \" \" << b;\nelse\n  cout << b << \" \" << a;",
+                options: ["read two floats and display them in descending order", "read two floats and display them in ascending order", "read two floats and display them in the same order", "no answer"],
+                correct: 1 // Sorts them smallest to largest.
+            },
+            {
+                id: 29,
+                text: "What is the output of this statement?",
+                code: "int a;\ncout << a++;",
+                options: ["value of a+1", "current value of a", "error message", "garbage"],
+                correct: 3 // Uninitialized local variable 'a' is garbage.
+            },
+            {
+                id: 30,
+                text: "What is the output of this code?",
+                code: "#include <iostream>\nusing namespace std;\nint main(){\n  int a;\n  cout << a++ << \" \";\n  return 0;\n}",
+                options: ["value of a+1", "current value of a", "error message", "garbage"],
+                correct: 3
+            },
+            {
+                id: 31,
+                text: "Which of the following is NOT a valid variable name declaration?",
+                code: null,
+                options: ["int a3;", "int 3a;", "int _a3;", "No correct answer"],
+                correct: 1 // Cannot start with digit.
+            },
+            {
+                id: 32,
+                text: "What is the output of the following code?",
+                code: "int number = 1/4 * 2;\ncout << \"Result is \" << number;",
+                options: ["Result is 1", "Result is 0.5", "Result is 0", "Result is 2"],
+                correct: 2 // 1/4 is 0. 0*2 is 0.
+            },
+            {
+                id: 33,
+                text: "What is the output of the following code?",
+                code: "for(int i=1; i<10; i++){\n    if(i%6 == 0)\n        break;\n    cout << i << \" \";\n}",
+                options: ["1 2 3 4 5 6", "No correct answer", "1 2 3", "1 2 3 4 5"],
+                correct: 3 // Breaks when i is 6, before printing 6. Prints 1 to 5.
+            },
+            {
+                id: 34,
+                text: "What is the output of the following code?",
+                code: "int x=0, i;\nfor(x=1; x<5; x++);\n    cout << x << \" \";",
+                options: ["1 2 3 4 5", "0 1 2 3 4", "1 2 3 4", "5"],
+                correct: 3 // Loop ends when x is 5. Semicolon means body is empty. Print x (5).
+            },
+            {
+                id: 35,
+                text: "What is the output of the following code?",
+                code: "for(int i=1; i<10; i++){\n    if(i%2 == 0)\n        continue;\n    cout << i << \" \";\n}",
+                options: ["1 3 5 7 9", "No correct answer", "1 2 3 4 5 6 7 8 9", "2 4 6 8"],
+                correct: 0 // Skips evens.
+            },
+            {
+                id: 36,
+                text: "What is the output of the following code?",
+                code: "int x=6;\nswitch(x){\n    case 3: x+=2;\n    case 6: x=1;\n    case 8: x=2;\n    default: x+=1;\n}\ncout << x;",
+                options: ["1", "5", "3", "2"],
+                correct: 2 
+            },
+            {
+                // Re-evaluating 39 based on provided options in prompt:
+                // a) 1, b) 5, c) 3, d) 2.
+                // If it falls through everything: 3.
+                // If it stops at default?
+                // Let's assume the code is valid and falls through.
+                id: 37,
+                text: "What is the output of the following code?",
+                code: "int x=6;\nswitch(x){\n    case 3: x+=2; break;\n    case 6: x=1; break;\n    case 8: x=2; break;\n    default: x+=1;\n}\ncout << x;",
+                options: ["1", "5", "3", "2"],
+                correct: 0
+            },
+            {
+                id: 38,
+                text: "Which of the following is NOT logical nor relational operator?",
+                code: null,
+                options: ["&&", "!", "||", "="],
+                correct: 3 // = is assignment.
+            },
+            {
+                id: 39,
+                text: "The output of an arithmetic expression with integer and real number is ... by default",
+                code: null,
+                options: ["Real number", "Integer if the large number is integer", "integer number", "Integer if the small number is integer"],
+                correct: 0 // Promotes to float/double.
+            },
+            {
+                id: 40,
+                text: "What is the output of the following code?",
+                code: "int count=5;\nwhile(count>0){\n     cout << count;\n     count-1;\n}",
+                options: ["5 4 3 2 1", "No correct answer", "4 3 2 1", "4 3 2 1 0"],
+                correct: 1 // count-1 does not modify count. Infinite loop of 55555... Option "No correct answer" is best fit.
+            },
+            {
+                id: 41,
+                text: "What is the output of the following code?",
+                code: "int x = 97;\ncout << (char)x;",
+                options: ["Runtime error", "a", "97,000000", "97"],
+                correct: 1 // ASCII 97 is 'a'.
+            },
+            {
+                id: 42,
+                text: "Loops in C++ are implemented using?",
+                code: null,
+                options: ["do-while", "for", "while", "all answers are correct"],
+                correct: 3
+            },
+            {
+                id: 43,
+                text: "What is the output of the following code?",
+                code: "int a = 9;\n// cout << \"a = \";\ncout << a++;",
+                options: ["10", "a = 10", "9", "a = 9"],
+                correct: 2 // Post-increment returns original value.
+            },
+            {
+                id: 44,
+                text: "Types of integer variables are.",
+                code: null,
+                options: ["int", "long", "short", "all answers are correct"],
+                correct: 3
+            },
+            {
+                id: 45,
+                text: "What is the value of a after executing the following command?",
+                code: "a = 5>2 ? 4 : 3;",
+                options: ["4", "2", "3", "5"],
+                correct: 0
+            },
+            {
+                id: 46,
+                text: "Which line(s) has(have) a syntax error in the following code?",
+                code: "int x; y;\ncin >> y;\nfor(x=1; x<y; x++);\ncout << x;",
+                options: ["Line 1", "Line 3", "Line 1 and 3", "Line 2 and 4"],
+                correct: 0 // 'int x; y;' -> y is missing a type.
+            },
+            {
+                id: 47,
+                text: "What is the output of the following code?",
+                code: "float f1 = 22/7;\nif(f1 == 3.14)\n    cout << \"Equal\";\nelse\n    cout << \"Not equal\";",
+                options: ["Equal", "Not equal", "Syntax error", "Output depends on the compiler"],
+                correct: 1 // 22/7 is integer 3. 3.0 != 3.14.
+            },
+            {
+                id: 48,
+                text: "What is the output of the following code?",
+                code: "int k, j;\nfor(k=1, j=10; k<5; k++, j*=2)\n  cout << j << \" \";",
+                options: ["10 20 30 40 50", "No Correct answer", "10 10 10 10 10", "10 20 40 80"],
+                correct: 3 // k=1, j=10(print). k=2, j=20(print). k=3, j=40(print). k=4, j=80(print). Wait.
+                // Init: j=10. Check k<5 (1<5). Print 10.
+                // Step: k=2, j=20. Check 2<5. Print 20.
+                // Step: k=3, j=40. Check 3<5. Print 40.
+                // Step: k=4, j=80. Check 4<5. Print 80.
+                // Step: k=5, j=160. Check 5<5 False.
+                // Output: 10 20 40 80.
+                // Options: a) 10 20 30 40 50, b) No correct answer, c) 10s, d) 10 20 30 40.
+                // My trace gives 10 20 40 80. None of the explicit arrays match except "No correct answer" or if D is a typo for 10 20 40 80.
+                // Given "j*=2", it doubles. 10, 20, 40, 80. 
+                // Option D is 10 20 30 40 (linear increase).
+                // So answer is B (No Correct answer).
+            },
+            {
+                id: 49, // Correction on logic for code 51 if option D was intended.
+                // But strictly B.
+                text: "What is the output of the following code?",
+                code: "int k, j;\nfor(k=1, j=10; k<5; k++, j*=2)\n  cout << j << \" \";",
+                options: ["10 20 30 40 50", "No Correct answer", "10 10 10 10 10", "10 20 30 40"],
+                correct: 1
+            },
+            {
+                id: 50,
+                text: "What is the output of the following code?",
+                code: "cout << \"\\n \\\"Result is \\\" \";",
+                options: ["\\n \"Result is \"", "\\ followed by \"Result is \"", "Newline \"Result is\"", "\\n \\Result is \\"],
+                correct: 2 // Literal string content.
+            },
+            {
+                id: 51,
+                text: "What is the output of the following code?",
+                code: "int a=5, b=8;\nif((a==5) && (b=9))\n    cout << a << \" \";\nelse\n    cout << b << \" \";",
+                options: ["9", "8", "5", "Runtime error"],
+                correct: 2 // b=9 assigns 9 (true). Condition true. Prints a (5). b is now 9.
+            },
+            {
+                id: 52,
+                text: "Select the correct body for the following factorial function long long factorial (long x)?",
+                code: null,
+                options: ["if (x==0) return 1;", "no correct answer", "return (x>1)?x*factorial(x-1):1;", "return (x>1)?x-1:1;"],
+                correct: 2
+            },
+            {
+                id: 53,
+                text: "In C++ language the array is always passed by?",
+                code: null,
+                options: ["value", "reference", "type", "no correct answer"],
+                correct: 1 // Colloquially "reference" (pointer to first element) in MCQ context vs value copy.
+            },
+            {
+                id: 54,
+                text: "What is the output of the following code?",
+                code: "int a[3]={20,30,40};\ncout << *(a+1) << \" \";",
+                options: ["20", "30", "40", "compiler error"],
+                correct: 1 // a+1 is address of index 1. Dereference gives 30.
+            },
+            {
+                id: 55,
+                text: "What is the minimum storage in bytes to store \"Welcome\" (C-string)?",
+                code: null,
+                options: ["7", "8", "9", "compiler error"],
+                correct: 1 // 7 chars + null terminator.
+            },
+            {
+                id: 56,
+                text: "What is the output of the following code?",
+                code: "int i=10;\nint *p = &i;\ncout << ++(*p) << \" \";",
+                options: ["10", "11", "Address of i", "Garbage value"],
+                correct: 1 // Pre-increment value at p. 10->11. Print 11.
+            },
+            {
+                id: 57,
+                text: "Choose the correct about pass by value?",
+                code: null,
+                options: ["It copies the variable in one more memory location", "It doesn’t use pointer in the function prototype", "It protects the original value from changing in outside functions", "All are correct"],
+                correct: 3
+            },
+            {
+                id: 58,
+                text: "Which statement is FALSE?",
+                code: null,
+                options: ["A variable may be declared and defined at the same time", "A variable defined once cannot be defined again in different scope", "A variable refers to a location in the memory", "A variable cannot be used before its declaration"],
+                correct: 1 // You can redefine in different scope (shadowing).
+            },
+            {
+                id: 59,
+                text: "What is the return value of calling f(3) of the following code?",
+                code: "int f(int x){\n  if(x==0) return 0;\n  else return (x+f(x-1));\n}",
+                options: ["0", "Infinite running", "Syntax error", "6"],
+                correct: 3 // 3 + 2 + 1 + 0 = 6.
+            },
+            {
+                id: 60,
+                text: "What is the output of the following code?",
+                code: "int x = 4;\ncout << x << \" \";\n{ int x = 7; }\ncout << x << \" \";",
+                options: ["7 7", "4 7", "7 4", "4 4"],
+                correct: 3 // Inner scope x=7 dies. Outer x remains 4.
+            },
+            {
+                id: 61,
+                text: "Choose the correct about array?",
+                code: null,
+                options: ["The array address is the address of the first element of the array itself", "The array size must be declared if not initialized immediately", "The array size is the sum of sizes of all elements of the array", "All are correct"],
+                correct: 3
+            },
+            {
+                id: 62,
+                text: "Which of the following is not a valid C++ variable name?",
+                code: null,
+                options: ["int number;", "int variable_count;", "float rate;", "int #name;"],
+                correct: 3 // # not allowed.
+            },
+            {
+                id: 63,
+                text: "What is the output of the following code?",
+                code: "cout << \"\\n\\t#####\";\nfor(int i=0; i<4; i++)\n    cout << \"\\n\\t  #\";",
+                options: ["print triangle", "print #", "print letter I", "print letter T"],
+                correct: 3 // Top bar #####, then vertical line of #. T shape.
+            },
+            {
+                id: 64,
+                text: "How many comparison are performed to the variable i in the following code?",
+                code: "int i=0;\nwhile(i<4)\n    i++;",
+                options: ["2", "3", "4", "5"],
+                correct: 3 // 0<4, 1<4, 2<4, 3<4, 4<4(False). 5 checks.
+            },
+            {
+                id: 65,
+                text: "Complete the following code snippet with the correct controlling expression.",
+                code: "int a = 2; float b = 5.0;\nswitch( ... ){}",
+                options: ["a+b", "a+5", "b", "b-2"],
+                correct: 1 // Switch requires integer. a+5 is int. others involve float.
+            },
+            {
+                id: 66,
+                text: "Which of the following will loop 10 times given that j=99",
+                code: null,
+                options: ["for(j=89; j<=99; j++)", "for(; j>=90; j--)", "for(j=0; j<9; j++)", "for(j=99; j>90; j--)"],
+                correct: 1 // 99 to 90 inclusive is 10 numbers.
+            },
+            {
+                id: 67,
+                text: "Which loop is more suitable when the number of iterations is known in advance",
+                code: null,
+                options: ["for", "while", "do while", "switch"],
+                correct: 0
+            },
+            {
+                id: 68,
+                text: "How many * will be printed?",
+                code: "do{\n    cout << \"*\";\n}while(0);",
+                options: ["zero", "one", "two", "infinite"],
+                correct: 1 // Do-while executes at least once.
+            },
+            {
+                id: 69,
+                text: "How many * will be printed?",
+                code: "for(int i=1; i<=5; i++)\n for(int j=i; j<=5; j++)\n    cout << \"*\";",
+                options: ["15", "25", "10", "5"],
+                correct: 0 // Sum 5+4+3+2+1 = 15.
+            },
+            {
+                id: 70,
+                text: "What is the output of the code?",
+                code: "int xy = 1;\nint main(){\n int xy = 3;\n { int xy = 9; }\n cout << xy;\n}",
+                options: ["1", "3", "9", "syntax error"],
+                correct: 1 // Inner 9 dies. Local 3 prints.
+            },
+            {
+                id: 71,
+                text: "Which of the following is the right form to initialize an array?",
+                code: null,
+                options: ["int a[3]={1,2,3};", "int a(3)={1,2,3};", "int a{3}={1,2,3};", "int a[3]=1,2,3;"],
+                correct: 0
+            },
+            {
+                id: 72,
+                text: "What is the output of the following code?",
+                code: "int arr[3][2]={7,8,4,3,9,1};\ncout << arr[2][1];",
+                options: ["4", "8", "1", "9"],
+                correct: 2 // Row 2 (3rd row), col 1 (2nd col). {7,8}, {4,3}, {9,1}. arr[2] is {9,1}. arr[2][1] is 1.
+            },
+            {
+                id: 73,
+                text: "What is the address of the second element of the array?",
+                code: "int arr[10];",
+                options: ["arr[2]", "arr[1]", "arr+1", "arr+2"],
+                correct: 2
+            },
+            {
+                id: 74,
+                text: "What is the output of the following?",
+                code: "int f(int n){\n   if(n>0) return(n+f(n-2));\n   else return 0;\n}\nint main(){\n   int n=10;\n   cout << f(n);\n}",
+                options: ["55", "1086420", "30", "108642"],
+                correct: 2 // 10+8+6+4+2+0 = 30.
+            },
+            {
+                id: 75,
+                text: "What is the output of the following?",
+                code: "void f1(int b){\n   if(--b<=0) return;\n   else{\n       cout << \"*\";\n       f1(b--);\n    }\n}\nint main(){\n   f1(10);\n}",
+                options: ["5", "9", "10", "infinite"],
+                correct: 1 // b-- passes original b. If b starts 10. --b makes it 9. checks 9<=0. Prints *. calls f1(9).
+                // inside f1(9): --b makes it 8. checks 8<=0. Prints *. calls f1(8).
+                // ...
+                // inside f1(2): --b makes it 1. checks 1<=0. Prints *. calls f1(1).
+                // inside f1(1): --b makes it 0. checks 0<=0 (True). Returns.
+                // It prints 9 stars. 
+                // But wait, look at option D "infinite".
+                // In C++, the order of operations for function arguments is unspecified, but usually post-decrement happens after value retrieval.
+                // However, there is a previous question with this code structure where the answer key was often Infinite or specific count depending on if `b--` decrements local `b` before the recursive call frame is created? No, `f1(b--)` passes current `b`, then decrements `b`.
+                // BUT `b` is local. The passed value matters. 
+                // If `b` becomes 9. `f1(9)` is called.
+                // The recursion terminates. 
+                // Wait, Q86 is different. Q85: `f1(b--)`.
+                // Logic:
+                // Call 10. --b -> 9. Print *. Call f1(9).
+                // Call 9. --b -> 8. Print *. Call f1(8).
+                // ...
+                // Call 2. --b -> 1. Print *. Call f1(1).
+                // Call 1. --b -> 0. Return.
+                // Stars: 9 (for 9,8,7,6,5,4,3,2,1).
+                // Option B is 9.
+            },
+            {
+                id: 76,
+                text: "What is the output of the following?",
+                code: "void f1(int b){\n   if(b<=0) return;\n   else{\n       cout << \"*\";\n       f1(b--);\n    }\n}\nint main(){\n   f1(10);\n}",
+                options: ["5", "9", "10", "infinite"],
+                correct: 3 // b-- passes 10. Recurses f1(10). Infinite loop.
+            },
+            {
+                id: 77,
+                text: "What is the output shape?",
+                code: "for(int i=1;i<=8;i++){\n    for(int j=1;j<=8;j++){\n       if(i==j || i+j == 9) cout << \"#\";\n       else cout << \" \";\n    }\n   cout << \"\\n\";\n}",
+                options: ["x", "U", "T", "Z"],
+                correct: 0 // X shape.
+            },
+			{
+                text: "Suppose that pointer p has a value of an address of 1002 and p is declared as int* and int has 4 bytes long. What is the address represented by p+2?",
+                code: null,
+                options: ["1004", "1006", "1008", "1010"],
+                correct: 3 // 1002 + (2 * 4) = 1010
+            },
+            {
+                text: "Which of the following should be included to use the rand function?",
+                code: null,
+                options: ["time.h", "stdlib.h", "stdio.h", "math.h"],
+                correct: 1 // stdlib.h
+            },
+            {
+                text: "Write statements that assign random integers to the variable n in the following range 1 ≤ n ≤ 100?",
+                code: null,
+                options: ["n = 1 + rand() % 99;", "n = rand() % 99;", "n = 1 + rand() % 100;", "n = rand() % 101;"],
+                correct: 2 // 1 + (0..99) = 1..100
+            },
+            {
+                text: "The following statement generate a random integer in range? n = 5 + rand()%30",
+                code: null,
+                options: ["0 ≤ n ≤ 29", "4 ≤ n ≤ 29", "5 ≤ n ≤ 35", "5 ≤ n ≤ 34"],
+                correct: 3 // Min: 5+0, Max: 5+29 = 34
+            }
+        ];
+
+        const questionsContainer = document.getElementById('questions-container');
+        let userAnswers = new Array(questions.length).fill(null); // Track user answers
+        let quizEnded = false;
+
+        // Render Questions
+        questions.forEach((q, index) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = "bg-white rounded-lg shadow-sm border border-gray-200 p-6 page-break";
+            questionCard.id = `q-card-${index}`;
+
+            let codeBlock = '';
+            if(q.code) {
+                codeBlock = `
+                    <div class="bg-gray-900 rounded-md p-4 mb-4 overflow-x-auto">
+                        <pre class="text-sm text-gray-100"><code>${escapeHtml(q.code)}</code></pre>
+                    </div>
+                `;
+            }
+
+            let optionsHtml = '';
+            q.options.forEach((opt, optIndex) => {
+                const letter = String.fromCharCode(97 + optIndex) + ")"; // a), b), c)...
+                const isCorrectForPrint = optIndex === q.correct ? " print-correct" : "";
+                
+                optionsHtml += `
+                    <label class="block group" id="label-${index}-${optIndex}">
+                        <input type="radio" name="q${index}" value="${optIndex}" class="hidden option-radio" onclick="checkAnswer(${index}, ${optIndex})">
+                        <div class="option-label p-3 rounded-md border border-gray-200 text-gray-700 font-medium flex items-center mb-2 ${isCorrectForPrint}" id="opt-${index}-${optIndex}">
+                            <span class="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center mr-3 text-xs font-bold text-gray-400 group-hover:border-gray-400 no-print" id="icon-${index}-${optIndex}">
+                                ${String.fromCharCode(65 + optIndex)}
+                            </span>
+                            <span class="print-index hidden">${letter}</span>
+                            ${escapeHtml(opt)}
+                        </div>
+                    </label>
+                `;
+            });
+
+            questionCard.innerHTML = `
+                <div class="flex items-center mb-3">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded mr-2">Q${index + 1}.</span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-4">${escapeHtml(q.text)}</h3>
+                ${codeBlock}
+                <div class="mt-4">
+                    ${optionsHtml}
+                </div>
+                <div id="feedback-${index}" class="hidden mt-2 text-sm font-bold no-print"></div>
+            `;
+
+            questionsContainer.appendChild(questionCard);
+        });
+
+        // Instant Feedback Function
+        function checkAnswer(qIndex, selectedIndex) {
+            if (quizEnded || userAnswers[qIndex] !== null) return; // Prevent changing answer
+
+            const question = questions[qIndex];
+            userAnswers[qIndex] = selectedIndex; // Store answer
+
+            const selectedDiv = document.getElementById(`opt-${qIndex}-${selectedIndex}`);
+            const selectedIcon = document.getElementById(`icon-${qIndex}-${selectedIndex}`);
+            const feedbackDiv = document.getElementById(`feedback-${qIndex}`);
+
+            // Disable all inputs for this question
+            const inputs = document.querySelectorAll(`input[name="q${qIndex}"]`);
+            inputs.forEach(input => {
+                input.disabled = true;
+                input.closest('label').classList.add('disabled');
+                input.closest('label').style.cursor = 'default';
+            });
+
+            if (selectedIndex === question.correct) {
+                // Correct
+                selectedDiv.classList.add('correct-answer');
+                selectedIcon.classList.add('border-green-600', 'text-green-700');
+                feedbackDiv.textContent = "Correct!";
+                feedbackDiv.classList.add('text-green-700');
+            } else {
+                // Incorrect
+                selectedDiv.classList.add('wrong-answer');
+                selectedIcon.classList.add('border-red-600', 'text-red-700');
+                feedbackDiv.textContent = "Incorrect.";
+                feedbackDiv.classList.add('text-red-700');
+
+                // Highlight correct answer
+                const correctDiv = document.getElementById(`opt-${qIndex}-${question.correct}`);
+                const correctIcon = document.getElementById(`icon-${qIndex}-${question.correct}`);
+                correctDiv.classList.add('correct-answer');
+                correctIcon.classList.add('border-green-600', 'text-green-700');
+            }
+            feedbackDiv.classList.remove('hidden');
+        }
+
+        // End Quiz & Reveal
+        function revealAll() {
+            quizEnded = true;
+            let score = 0;
+
+            questions.forEach((q, index) => {
+                // If user answered correctly, increment score
+                if (userAnswers[index] === q.correct) {
+                    score++;
+                }
+                
+                // If user didn't answer, reveal the correct one
+                if (userAnswers[index] === null) {
+                    // Disable inputs
+                    const inputs = document.querySelectorAll(`input[name="q${index}"]`);
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                        input.closest('label').classList.add('disabled');
+                    });
+
+                    // Highlight correct
+                    const correctDiv = document.getElementById(`opt-${index}-${q.correct}`);
+                    const correctIcon = document.getElementById(`icon-${index}-${q.correct}`);
+                    correctDiv.classList.add('correct-answer');
+                    correctIcon.classList.add('border-green-600', 'text-green-700');
+                    
+                    const feedbackDiv = document.getElementById(`feedback-${index}`);
+                    feedbackDiv.textContent = "Unanswered - Answer Revealed";
+                    feedbackDiv.classList.add('text-gray-600');
+                    feedbackDiv.classList.remove('hidden');
+                }
+            });
+
+            const scoreDisplay = document.getElementById('score-display');
+            scoreDisplay.textContent = `Final Score: ${score} / ${questions.length}`;
+            scoreDisplay.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
