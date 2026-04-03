@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Short Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- INTERACTIVE THEME --- */
+        .option-label {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        /* Hover effect only if not disabled */
+        label:not(.disabled) .option-label:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .option-radio:checked + .option-label {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* Instant Feedback States */
+        .correct-answer {
+            background-color: #dcfce7 !important; /* Green-100 */
+            border-color: #22c55e !important; /* Green-500 */
+            color: #14532d !important; /* Green-900 */
+        }
+        .wrong-answer {
+            background-color: #fee2e2 !important; /* Red-100 */
+            border-color: #ef4444 !important; /* Red-500 */
+            color: #7f1d1d !important; /* Red-900 */
+        }
+        
+        /* --- COMPACT PRINT THEME (Preserved) --- */
+        @media print {
+            @page {
+                margin: 1cm;
+                size: A4;
+            }
+            
+            body {
+                background-color: white;
+                font-size: 10pt;
+                color: black;
+                padding: 0 !important;
+            }
+
+            /* Hide elements not needed for print */
+            .no-print, button, .print\:hidden {
+                display: none !important;
+            }
+
+            /* Layout Adjustments */
+            .max-w-5xl {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .text-center.mb-12 {
+                margin-bottom: 1rem !important;
+                text-align: left;
+                border-bottom: 2px solid #000;
+                padding-bottom: 0.5rem;
+            }
+
+            /* Grid for questions to save space */
+            #questions-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* 2 Columns */
+                gap: 1cm;
+                margin-top: 0.5cm !important;
+                width: 100%;
+            }
+            
+            /* Remove vertical spacing logic from Tailwind */
+            .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+                --tw-space-y-reverse: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+
+            /* Card styling for print */
+            .page-break {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                padding: 0 !important;
+                margin-bottom: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background-color: transparent !important;
+            }
+
+            /* Question Header */
+            .flex.items-center.mb-3 {
+                margin-bottom: 0.25rem !important;
+            }
+            span.rounded {
+                padding: 0 !important;
+                font-size: 10pt !important;
+                background-color: transparent !important;
+                color: #000 !important;
+                font-weight: bold;
+            }
+
+            /* Question Text */
+            h3 {
+                font-size: 10pt !important;
+                margin-bottom: 0.25rem !important;
+                color: #000 !important;
+            }
+
+            /* Options */
+            .mt-4 { margin-top: 0.2rem !important; }
+            
+            .option-label { 
+                padding: 0 !important; 
+                border: none !important;
+                margin-bottom: 2px !important;
+                background: none !important;
+            }
+            
+            /* Highlight Correct Answer in Print (Always show key) */
+            .print-correct {
+                font-weight: bold !important;
+                text-decoration: underline;
+                background-color: transparent !important;
+                border: none !important;
+                color: black !important;
+            }
+
+            /* Hide Radio Buttons/Icons in print */
+            .w-6.h-6 { 
+                display: none !important; 
+            }
+            
+            /* Show text index (a, b, c, d) */
+            .print-index {
+                display: inline-block !important;
+                font-weight: bold;
+                margin-right: 5px;
+            }
+        }
+    </style>
+</head>
+<body class="py-10 text-gray-800">
+
+    <div class="max-w-5xl mx-auto px-4">
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Lec5 MCQ</h1>
+            <p class="text-gray-600">Topics: Data Structure and Time Complexity</p>
+            
+            <!-- Controls -->
+            <div class="mt-8 flex justify-center gap-4 no-print">
+                <button onclick="revealAll()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded shadow transition-colors">
+                    End Quiz & Reveal Answers
+                </button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition-colors">
+                    Print / Save as PDF
+                </button>
+            </div>
+            <div id="score-display" class="hidden mt-6 p-4 bg-blue-50 border border-blue-200 rounded text-xl font-bold text-blue-800 text-center no-print"></div>
+        </div>
+
+        <!-- Questions Container -->
+        <div id="questions-container" class="space-y-6">
+            <!-- Content rendered via JS -->
+        </div>
+
+    </div>
+
+    <script>
+        // The 4 Specific Questions requested
+        const questions = [
+    {
+        text: "What is a class in Object-Oriented Programming?",
+        code: null,
+        options: ["An instance of an object", "A blueprint or template for creating objects", "A primitive data type", "A standard Python library"],
+        correct: 1
+    },
+    {
+        text: "Which keyword is used to define a class in Python?",
+        code: null,
+        options: ["def", "object", "class", "struct"],
+        correct: 2
+    },
+    {
+        text: "What are the variables that belong to a class called in Python?",
+        code: null,
+        options: ["Attributes", "Methods", "Constructors", "Blueprints"],
+        correct: 0
+    },
+    {
+        text: "Functions that are defined inside a class to describe the behaviors of an object are called:",
+        code: null,
+        options: ["Variables", "Constructors", "Attributes", "Methods"],
+        correct: 3
+    },
+    {
+        text: "Which operator is used to access the attributes and methods of an object?",
+        code: null,
+        options: ["Comma (,)", "Asterisk (*)", "Dot (.)", "Arrow (->)"],
+        correct: 2
+    },
+    {
+        text: "How do you create an instance (object) of a class named 'Employee' in Python?",
+        code: null,
+        options: ["Employee emp = Employee()", "emp = Employee()", "emp = new Employee()", "Employee emp"],
+        correct: 1
+    },
+    {
+        text: "What is the output of the following code?",
+        code: "class Animal:\n    legs = 4\n\ndog = Animal()\nprint(dog.legs)",
+        options: ["0", "4", "None", "AttributeError"],
+        correct: 1
+    },
+    {
+        text: "If we change the value of a class attribute using the class name (e.g., ClassName.attr = new_value), how does it affect the objects?",
+        code: null,
+        options: ["It changes the value across all instances of that class.", "It changes the value only for the first instance created.", "It creates a new instance variable.", "It throws an error."],
+        correct: 0
+    },
+    {
+        text: "What happens if we modify an attribute using an object instance (e.g., obj.attr = new_value)?",
+        code: null,
+        options: ["It changes the value across all instances.", "It changes the value in that specific instance only.", "It modifies the original class blueprint.", "It raises an AttributeError."],
+        correct: 1
+    },
+    {
+        text: "What is the purpose of the 'self' parameter in a Python class method?",
+        code: null,
+        options: ["It is used to define class variables.", "It represents the instance of the class and points to the current object.", "It makes the method static.", "It destroys the object after execution."],
+        correct: 1
+    },
+    {
+        text: "Which of the following methods acts as a constructor in Python?",
+        code: null,
+        options: ["__start__", "__constructor__", "__init__", "__create__"],
+        correct: 2
+    },
+    {
+        text: "When is the __init__ method called?",
+        code: null,
+        options: ["When the class is defined.", "When an object is deleted.", "Automatically when a new object of the class is created.", "Only when explicitly called like obj.__init__()"],
+        correct: 2
+    },
+    {
+        text: "What is the return value of the __init__ method?",
+        code: null,
+        options: ["The newly created object", "An integer representing object ID", "True if successful", "It has no return value"],
+        correct: 3
+    },
+    {
+        text: "What is the correct way to call a method named 'display' from an object named 'book'?",
+        code: null,
+        options: ["book.display()", "display(book)", "Book.display()", "book.display(self)"],
+        correct: 0
+    },
+    {
+        text: "What does the Python id() function return?",
+        code: null,
+        options: ["The value of an object", "The identity (address) of an object", "The size of an object in memory", "The class name of an object"],
+        correct: 1
+    },
+    {
+        text: "What will happen if we run this code?",
+        code: "class Student:\n    school = 'High School'\n\ns1 = Student()\ns2 = Student()\nStudent.school = 'Academy'\nprint(s1.school)",
+        options: ["High School", "Academy", "None", "Error"],
+        correct: 1
+    },
+    {
+        text: "What will happen if we run this code?",
+        code: "class Car:\n    def __init__(self, brand):\n        self.brand = brand\n\ncar1 = Car('Honda')\ncar2 = car1\ncar2.brand = 'Ford'\nprint(car1.brand)",
+        options: ["Honda", "Ford", "None", "Error"],
+        correct: 1
+    },
+    {
+        text: "What will happen if we run this code?",
+        code: "class Person:\n    def __init__(self, name='Unknown'):\n        self.name = name\n\np = Person()\nprint(p.name)",
+        options: ["Unknown", "Error", "None", "Blank output"],
+        correct: 0
+    },
+    {
+        text: "What will happen if we run this code?",
+        code: "class Circle:\n    def __init__(self, radius):\n        self.radius = radius\n\nc = Circle()\nprint(c.radius)",
+        options: ["0", "None", "TypeError", "AttributeError"],
+        correct: 2
+    },
+    {
+        text: "What is the main use of 'getter' and 'setter' methods (like getWidth and setWidth) in a class?",
+        code: null,
+        options: ["To define global variables", "To implement Encapsulation and control attribute access", "To create a parameterized constructor", "To delete an object"],
+        correct: 1
+    },
+    {
+        text: "Which statement is true about Instance Variables?",
+        code: null,
+        options: ["They are shared among all objects of a class.", "They belong to a specific object and maintain its state.", "They are defined outside the __init__ method.", "They cannot be changed once assigned."],
+        correct: 1
+    },
+    {
+        text: "What will happen if we run this code?",
+        code: "class Laptop:\n    brand = 'Dell'\n\nlap1 = Laptop()\nlap1.brand = 'HP'\nprint(Laptop.brand)",
+        options: ["HP", "Dell", "None", "Error"],
+        correct: 1
+    },
+    {
+        text: "In Python OOP, what do we call the properties that represent the state of an object?",
+        code: null,
+        options: ["Methods", "Attributes", "Constructors", "Blueprints"],
+        correct: 1
+    },
+    {
+        text: "Which of the following is considered a non-primitive data type?",
+        code: null,
+        options: ["Integer", "Float", "Class", "Boolean"],
+        correct: 2
+    },
+    {
+        text: "What will be the output of the following code?",
+        code: "class Book:\n    def __init__(self, title):\n        self.title = title\n    def get_title(self):\n        return self.title\n\nb = Book('Python Basics')\nprint(b.get_title())",
+        options: ["Book", "self.title", "Python Basics", "Error"],
+        correct: 2
+    }
+];
+
+        const questionsContainer = document.getElementById('questions-container');
+        let userAnswers = new Array(questions.length).fill(null); // Track user answers
+        let quizEnded = false;
+
+        // Render Questions
+        questions.forEach((q, index) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = "bg-white rounded-lg shadow-sm border border-gray-200 p-6 page-break";
+            questionCard.id = `q-card-${index}`;
+
+            let codeBlock = '';
+            if(q.code) {
+                codeBlock = `
+                    <div class="bg-gray-900 rounded-md p-4 mb-4 overflow-x-auto">
+                        <pre class="text-sm text-gray-100"><code>${escapeHtml(q.code)}</code></pre>
+                    </div>
+                `;
+            }
+
+            let optionsHtml = '';
+            q.options.forEach((opt, optIndex) => {
+                const letter = String.fromCharCode(97 + optIndex) + ")"; // a), b), c)...
+                const isCorrectForPrint = optIndex === q.correct ? " print-correct" : "";
+                
+                optionsHtml += `
+                    <label class="block group" id="label-${index}-${optIndex}">
+                        <input type="radio" name="q${index}" value="${optIndex}" class="hidden option-radio" onclick="checkAnswer(${index}, ${optIndex})">
+                        <div class="option-label p-3 rounded-md border border-gray-200 text-gray-700 font-medium flex items-center mb-2 ${isCorrectForPrint}" id="opt-${index}-${optIndex}">
+                            <span class="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center mr-3 text-xs font-bold text-gray-400 group-hover:border-gray-400 no-print" id="icon-${index}-${optIndex}">
+                                ${String.fromCharCode(65 + optIndex)}
+                            </span>
+                            <span class="print-index hidden">${letter}</span>
+                            ${escapeHtml(opt)}
+                        </div>
+                    </label>
+                `;
+            });
+
+            questionCard.innerHTML = `
+                <div class="flex items-center mb-3">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded mr-2">Q${index + 1}.</span>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-4">${escapeHtml(q.text)}</h3>
+                ${codeBlock}
+                <div class="mt-4">
+                    ${optionsHtml}
+                </div>
+                <div id="feedback-${index}" class="hidden mt-2 text-sm font-bold no-print"></div>
+            `;
+
+            questionsContainer.appendChild(questionCard);
+        });
+
+        // Instant Feedback Function
+        function checkAnswer(qIndex, selectedIndex) {
+            if (quizEnded || userAnswers[qIndex] !== null) return; // Prevent changing answer
+
+            const question = questions[qIndex];
+            userAnswers[qIndex] = selectedIndex; // Store answer
+
+            const selectedDiv = document.getElementById(`opt-${qIndex}-${selectedIndex}`);
+            const selectedIcon = document.getElementById(`icon-${qIndex}-${selectedIndex}`);
+            const feedbackDiv = document.getElementById(`feedback-${qIndex}`);
+
+            // Disable all inputs for this question
+            const inputs = document.querySelectorAll(`input[name="q${qIndex}"]`);
+            inputs.forEach(input => {
+                input.disabled = true;
+                input.closest('label').classList.add('disabled');
+                input.closest('label').style.cursor = 'default';
+            });
+
+            if (selectedIndex === question.correct) {
+                // Correct
+                selectedDiv.classList.add('correct-answer');
+                selectedIcon.classList.add('border-green-600', 'text-green-700');
+                feedbackDiv.textContent = "Correct!";
+                feedbackDiv.classList.add('text-green-700');
+            } else {
+                // Incorrect
+                selectedDiv.classList.add('wrong-answer');
+                selectedIcon.classList.add('border-red-600', 'text-red-700');
+                feedbackDiv.textContent = "Incorrect.";
+                feedbackDiv.classList.add('text-red-700');
+
+                // Highlight correct answer
+                const correctDiv = document.getElementById(`opt-${qIndex}-${question.correct}`);
+                const correctIcon = document.getElementById(`icon-${qIndex}-${question.correct}`);
+                correctDiv.classList.add('correct-answer');
+                correctIcon.classList.add('border-green-600', 'text-green-700');
+            }
+            feedbackDiv.classList.remove('hidden');
+        }
+
+        // End Quiz & Reveal
+        function revealAll() {
+            quizEnded = true;
+            let score = 0;
+
+            questions.forEach((q, index) => {
+                // If user answered correctly, increment score
+                if (userAnswers[index] === q.correct) {
+                    score++;
+                }
+                
+                // If user didn't answer, reveal the correct one
+                if (userAnswers[index] === null) {
+                    // Disable inputs
+                    const inputs = document.querySelectorAll(`input[name="q${index}"]`);
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                        input.closest('label').classList.add('disabled');
+                    });
+
+                    // Highlight correct
+                    const correctDiv = document.getElementById(`opt-${index}-${q.correct}`);
+                    const correctIcon = document.getElementById(`icon-${index}-${q.correct}`);
+                    correctDiv.classList.add('correct-answer');
+                    correctIcon.classList.add('border-green-600', 'text-green-700');
+                    
+                    const feedbackDiv = document.getElementById(`feedback-${index}`);
+                    feedbackDiv.textContent = "Unanswered - Answer Revealed";
+                    feedbackDiv.classList.add('text-gray-600');
+                    feedbackDiv.classList.remove('hidden');
+                }
+            });
+
+            const scoreDisplay = document.getElementById('score-display');
+            scoreDisplay.textContent = `Final Score: ${score} / ${questions.length}`;
+            scoreDisplay.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
