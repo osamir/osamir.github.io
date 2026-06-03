@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egypt Fair Gold Price Tracker</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: '#fbbf24'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-5xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-10 mt-6">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                <i class="fa-solid fa-scale-balanced text-gold mr-3"></i>Fair Gold Price <span class="text-gold">Egypt</span>
+            </h1>
+            <p class="text-slate-400 max-w-2xl mx-auto">
+                Live dashboard calculating the accurate, fair value of a 21k Gold Gram in Egypt using lightning-fast, open market APIs for both global gold and USD/EGP rates.
+            </p>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            
+            <!-- USD Rate Card -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl flex flex-col items-center text-center relative overflow-hidden group hover:border-blue-500/50 transition-colors">
+                <div class="absolute -right-4 -top-4 text-slate-800/50 text-8xl group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                </div>
+                <div class="z-10 w-full flex justify-between items-start mb-4">
+                    <span class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-1 rounded">LIVE MARKET</span>
+                    <i class="fa-solid fa-bolt text-slate-400"></i>
+                </div>
+                <div class="z-10 w-full">
+                    <p class="text-sm text-slate-400 mb-1 uppercase tracking-wider">USD to EGP Rate</p>
+                    <h2 id="usd-rate" class="text-4xl font-bold text-white mb-2">-- EGP</h2>
+                    <p id="usd-status" class="text-xs text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Waiting...</p>
+                </div>
+            </div>
+
+            <!-- Global Gold Card -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl flex flex-col items-center text-center relative overflow-hidden group hover:border-gold/50 transition-colors">
+                <div class="absolute -right-4 -top-4 text-slate-800/50 text-8xl group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div class="z-10 w-full flex justify-between items-start mb-4">
+                    <span class="bg-yellow-500/20 text-gold text-xs font-bold px-2 py-1 rounded">GLOBAL OUNCE (XAU)</span>
+                    <i class="fa-solid fa-globe text-slate-400"></i>
+                </div>
+                <div class="z-10 w-full">
+                    <p class="text-sm text-slate-400 mb-1 uppercase tracking-wider">Ounce Price in USD</p>
+                    <h2 id="gold-rate" class="text-4xl font-bold text-white mb-2">$ --</h2>
+                    <p id="gold-status" class="text-xs text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Waiting...</p>
+                </div>
+            </div>
+
+            <!-- Fair Value Card -->
+            <div class="glass-card rounded-2xl p-6 shadow-xl flex flex-col items-center text-center relative overflow-hidden group border-gold/30 hover:border-green-500/50 transition-colors">
+                <div class="absolute -right-4 -top-4 text-slate-800/50 text-8xl group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-gem"></i>
+                </div>
+                <div class="z-10 w-full flex justify-between items-start mb-4">
+                    <span class="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-1 rounded">CALCULATION</span>
+                    <i class="fa-solid fa-calculator text-slate-400"></i>
+                </div>
+                <div class="z-10 w-full">
+                    <p class="text-sm text-slate-400 mb-1 uppercase tracking-wider">21k Gram Fair Price</p>
+                    <h2 id="fair-price" class="text-4xl font-bold text-green-400 mb-2">-- EGP</h2>
+                    <p class="text-xs text-slate-400">Formula: (Ounce / 31.103) × (21/24) × EGP Rate</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Controls -->
+        <div class="flex justify-center pb-10">
+            <button onclick="updateDashboard()" id="refresh-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition-all transform hover:scale-105 flex items-center">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Refresh Data
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Use the highly reliable Fawaz Ahmed open currency API (served globally via Cloudflare CDN)
+        const PRIMARY_API = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies';
+        const FALLBACK_API = 'https://latest.currency-api.pages.dev/v1/currencies';
+
+        /**
+         * Safely update status text
+         */
+        function updateStatus(id, text, colorClass = 'text-slate-400') {
+            const el = document.getElementById(`${id}-status`);
+            if (el) {
+                el.innerHTML = text;
+                el.className = `text-xs ${colorClass}`;
+            }
+        }
+
+        /**
+         * Fetch with built-in fallback routing
+         */
+        async function fetchWithFallback(endpoint) {
+            try {
+                const response = await fetch(`${PRIMARY_API}/${endpoint}`);
+                if (!response.ok) throw new Error('Primary API failed');
+                return await response.json();
+            } catch (error) {
+                console.warn(`Primary API failed for ${endpoint}, using fallback...`, error);
+                const fallbackResponse = await fetch(`${FALLBACK_API}/${endpoint}`);
+                return await fallbackResponse.json();
+            }
+        }
+
+        /**
+         * Fetches live USD to EGP Rate
+         */
+        async function fetchUsdRate() {
+            updateStatus('usd', '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Fetching Live Rate...');
+            try {
+                const data = await fetchWithFallback('usd.json');
+                if (data && data.usd && data.usd.egp) {
+                    updateStatus('usd', 'Success: API Synchronized', 'text-green-400');
+                    return data.usd.egp;
+                }
+                throw new Error('Invalid data structure');
+            } catch (error) {
+                console.error('USD Fetch Error:', error);
+                updateStatus('usd', 'Failed to load', 'text-red-400');
+                return null;
+            }
+        }
+
+        /**
+         * Fetches Global Gold Ounce Price (XAU)
+         */
+        async function fetchGoldPrice() {
+            updateStatus('gold', '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Fetching Live Gold...');
+            try {
+                const data = await fetchWithFallback('xau.json');
+                if (data && data.xau && data.xau.usd) {
+                    updateStatus('gold', 'Success: API Synchronized', 'text-green-400');
+                    return data.xau.usd;
+                }
+                throw new Error('Invalid data structure');
+            } catch (error) {
+                console.error('Gold Fetch Error:', error);
+                updateStatus('gold', 'Failed to load', 'text-red-400');
+                return null;
+            }
+        }
+
+        /**
+         * Main function to coordinate fetching and math
+         */
+        async function updateDashboard() {
+            // UI Reset State
+            const btn = document.getElementById('refresh-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading...';
+            btn.disabled = true;
+
+            document.getElementById('usd-rate').innerText = '... EGP';
+            document.getElementById('gold-rate').innerText = '$ ...';
+            document.getElementById('fair-price').innerText = '... EGP';
+
+            // Fetch concurrently for maximum speed
+            const [usdRate, goldOunce] = await Promise.all([
+                fetchUsdRate(),
+                fetchGoldPrice()
+            ]);
+
+            // Update UI with raw rates
+            if (usdRate) {
+                document.getElementById('usd-rate').innerText = usdRate.toFixed(2) + ' EGP';
+            } else {
+                document.getElementById('usd-rate').innerText = 'Error';
+            }
+
+            if (goldOunce) {
+                document.getElementById('gold-rate').innerText = '$ ' + goldOunce.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            } else {
+                document.getElementById('gold-rate').innerText = 'Error';
+            }
+
+            // Perform Math and update Fair Price
+            if (usdRate && goldOunce) {
+                // 1 Troy Ounce = 31.1034768 Grams (24k)
+                const gram24kUsd = goldOunce / 31.1034768;
+                
+                // 21k Gold is 21/24 parts pure gold
+                const gram21kUsd = gram24kUsd * (21 / 24);
+                
+                // Convert back to EGP using the live market rate
+                const fairPriceEgp = gram21kUsd * usdRate;
+
+                document.getElementById('fair-price').innerText = fairPriceEgp.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' EGP';
+            } else {
+                document.getElementById('fair-price').innerText = 'Calculation Failed';
+            }
+
+            // Restore Button
+            btn.innerHTML = '<i class="fa-solid fa-rotate-right mr-2"></i> Refresh Data';
+            btn.disabled = false;
+        }
+
+        // Run automatically when page loads
+        window.onload = () => {
+            updateDashboard();
+        };
+
+    </script>
+</body>
+</html>
